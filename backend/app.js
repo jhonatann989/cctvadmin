@@ -17,7 +17,7 @@ const CaseTechnicalStudy = require("./models/caseTechnicalStudy")
 const CaseQuotationRequest = require("./models/caseCuotationRequest")
 const CaseSale = require("./models/caseSale")
 const CaseInstallation = require("./models/caseInstalation")
-const CaseLogs = require("./models/caseLogs")
+const CaseLogs = require("./models/caseLogs");
 
 const app = express()
 
@@ -25,10 +25,11 @@ app.use(cors({ origin: 'http://localhost:3000', }))
 app.use(express.json())
 
 /**middlewares */
-app.use(function (req, res, next) { initData(); next(); });
+// app.use(function (req, res, next) { initData(); next(); });
 
 app.use((req, res, next) => {
-  if (req.url !== "/login") {
+  let wildUrls = ["/login", "/logout"]
+  if (!wildUrls.includes(req.url)) {
     try {
       let token = req.header("Authorization").replace("Bearer ", "")
       jwt.verify(token, process.env.SECRET, async (error, decoded) => {
@@ -52,16 +53,64 @@ app.use((req, res, next) => {
 
 /***************** */
 app.post("/login", async (req, res) => {
+  console.log(req.body)
   let username = req.body.username
   let password = req.body.password
   let authenticatedUser = await UserAuth.findOne({ where: { username: username, password: password }, include: [UserPermissions], attributes: { exclude: ["password"] } })
   if (authenticatedUser === null) {
-    res.status(200).send({})
+    res.status(401).send({})
   } else {
     let token = jwt.sign({ data: username }, process.env.SECRET, { expiresIn: "12h" })
     await UserAuth.update({ token: token }, { where: { username: username, password: password } })
     authenticatedUser.set("token", token)
     res.status(200).send(authenticatedUser)
+  }
+})
+
+app.get("/logout", async (req, res) => {
+  try {
+    let token = req.header("Authorization").replace("Bearer ", "")
+    jwt.verify(token, process.env.SECRET, async (error, decoded) => {
+      if (error) res.status(200).send({ message: "it appears that token is an empty string or an invalid value.", error:  error.message})
+      else {
+        let authenticatedUser = await UserAuth.findOne({ where: { username: decoded.data, token: token }, include: [UserPermissions] })
+        if (authenticatedUser === null) {
+          res.status(200).send({ message: "Already logged out." })
+        } else {
+          await UserAuth.update({ token: "" }, { where: { username: decoded.data } })
+          res.status(200).send({ message: "Logged out successfully." })
+        }
+      }
+    })
+  }
+  catch (error) {  
+    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." }) 
+  }
+})
+
+app.get("/identity", async (req, res) => {
+  try {
+    let token = req.header("Authorization").replace("Bearer ", "")
+    jwt.verify(token, process.env.SECRET, async (error, decoded) => {
+      if (error) { res.status(401).send({ error: error.message }) }
+      else {
+        let authenticatedUser = await UserAuth.findOne({ 
+          where: { username: decoded.data }, 
+          attributes: { exclude: ["password", "token", "createdAt", "updatedAt", "id"] } 
+        })
+        if (authenticatedUser === null) {
+          res.status(401).send({ error: "Unknown User." })
+        } else {
+          res.status(200).send({
+            id: authenticatedUser.get("UserId"),
+            fullName: authenticatedUser.get("username"),
+          })
+        }
+      }
+    })
+  }
+  catch (error) {  
+    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." }) 
   }
 })
 

@@ -26,7 +26,7 @@ app.use(express.json())
 
 /**middlewares */
 // app.use(function (req, res, next) { initData(); next(); });
-
+// verify authorization
 app.use((req, res, next) => {
   let wildUrls = ["/login", "/logout"]
   if (!wildUrls.includes(req.url)) {
@@ -45,11 +45,14 @@ app.use((req, res, next) => {
         }
       })
     }
-    catch (error) {  
-      res.status(400).send({ error: "It appears that Bearer Token is not present in headers." }) 
+    catch (error) {
+      res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
     }
   } else { next() }
 })
+
+//verify permissions
+
 
 /***************** */
 app.post("/login", async (req, res) => {
@@ -71,7 +74,7 @@ app.get("/logout", async (req, res) => {
   try {
     let token = req.header("Authorization").replace("Bearer ", "")
     jwt.verify(token, process.env.SECRET, async (error, decoded) => {
-      if (error) res.status(200).send({ message: "it appears that token is an empty string or an invalid value.", error:  error.message})
+      if (error) res.status(200).send({ message: "it appears that token is an empty string or an invalid value.", error: error.message })
       else {
         let authenticatedUser = await UserAuth.findOne({ where: { username: decoded.data, token: token }, include: [UserPermissions] })
         if (authenticatedUser === null) {
@@ -83,8 +86,8 @@ app.get("/logout", async (req, res) => {
       }
     })
   }
-  catch (error) {  
-    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." }) 
+  catch (error) {
+    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
   }
 })
 
@@ -94,9 +97,9 @@ app.get("/identity", async (req, res) => {
     jwt.verify(token, process.env.SECRET, async (error, decoded) => {
       if (error) { res.status(401).send({ error: error.message }) }
       else {
-        let authenticatedUser = await UserAuth.findOne({ 
-          where: { username: decoded.data }, 
-          attributes: { exclude: ["password", "token", "createdAt", "updatedAt", "id"] } 
+        let authenticatedUser = await UserAuth.findOne({
+          where: { username: decoded.data },
+          attributes: { exclude: ["password", "token", "createdAt", "updatedAt", "id"] }
         })
         if (authenticatedUser === null) {
           res.status(401).send({ error: "Unknown User." })
@@ -109,39 +112,64 @@ app.get("/identity", async (req, res) => {
       }
     })
   }
-  catch (error) {  
-    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." }) 
+  catch (error) {
+    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
   }
 })
 
 app.use(crud('/users', {
-  getList: async ({ filter, limit, offset, order }) => Users.findAndCountAll({ limit, offset, order, where: filter, include: [UserDatas, UserStaff] }),
-  getOne: async (id, { req, res }) => Users.findByPk(id, { include: [UserDatas, UserStaff] }),
+  getList: async ({ filter, limit, offset, order }, {req}) => {
+    if(await getPermission("users", "list", req.header("Authorization"))) {
+      return Users.findAndCountAll({ limit, offset, order, where: filter, include: [UserDatas, UserStaff] })
+    }
+    else {
+      return {count: 0, rows: []}
+    }
+  },
+  getOne: async (id, { req, res }) => {
+    if(await getPermission("users", "show", req.header("Authorization"))) {
+      return Users.findByPk(id, { include: [UserDatas, UserStaff] })
+    }
+    else {
+      return undefined
+    }
+    
+  },
   create: async (body, { req, res }) => {
-    let UsersModel = await Users.create(body)
-
-    if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
-      UsersModel.addUserDatas(await UserDatas.create(body.UserDatas[0]))
+    if(await getPermission("users", "create", req.header("Authorization"))) {
+      let UsersModel = await Users.create(body)
+      if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
+        UsersModel.addUserDatas(await UserDatas.create(body.UserDatas[0]))
+      }
+      if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
+        UsersModel.addUserStaff(await UserStaff.create(body.UserStaffs[0]))
+      }
+      return UsersModel
     }
-    if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
-      UsersModel.addUserStaff(await UserStaff.create(body.UserStaffs[0]))
+    else {
+      return undefined
     }
-    return UsersModel
   },
   update: async (id, body, { req, res }) => {
-    Users.update(body, { where: { id } })
-    if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
-      UserDatas.update(body.UserDatas[0], { where: { UserId: id } })
+    if(await getPermission("users", "edit", req.header("Authorization"))) {
+      Users.update(body, { where: { id } })
+      if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
+        UserDatas.update(body.UserDatas[0], { where: { UserId: id } })
+      }
+      if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
+        UserStaff.update(body.UserStaffs[0], { where: { UserId: id } })
+      }
+      return Users.findByPk(id)
+    } else {
+      return undefined
     }
-    if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
-      UserStaff.update(body.UserStaffs[0], { where: { UserId: id } })
-    }
-    return Users.findByPk(id)
   },
   destroy: async (id, { req, res }) => {
-    await Users.destroy({ where: { id } })
-    await UserStaff.destroy({ where: { UserId: id } })
-    await UserDatas.destroy({ where: { UserId: id } })
+    if(await getPermission("users", "delete", req.header("Authorization"))) {
+      await Users.destroy({ where: { id } })
+      await UserStaff.destroy({ where: { UserId: id } })
+      await UserDatas.destroy({ where: { UserId: id } })
+    } 
   },
   search: async (q, limit) => {
     const { rows, count } = await Users.findAndCountAll({
@@ -152,6 +180,7 @@ app.use(crud('/users', {
           { name: { [Op.like]: `${q}%` } },
         ],
       },
+      attributes:["cc", "name"]
     })
     return { rows, count }
   }
@@ -185,105 +214,9 @@ app.use(crud('/userauths', {
   }
 }))
 
-app.use(crud('/cases', {
-  ...sequelizeCrud(Case),
-  search: async (q, limit) => {
-    const { rows, count } = await Case.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
-app.use(crud('/case_technical_studies', {
-  ...sequelizeCrud(CaseTechnicalStudy),
-  search: async (q, limit) => {
-    const { rows, count } = await CaseTechnicalStudy.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
-app.use(crud('/case_quotation_requests', {
-  ...sequelizeCrud(CaseQuotationRequest),
-  search: async (q, limit) => {
-    const { rows, count } = await CaseQuotationRequest.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
-app.use(crud('/case_sales', {
-  ...sequelizeCrud(CaseSale),
-  search: async (q, limit) => {
-    const { rows, count } = await CaseSale.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
-app.use(crud('/case_installations', {
-  ...sequelizeCrud(CaseInstallation),
-  search: async (q, limit) => {
-    const { rows, count } = await CaseInstallation.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
-app.use(crud('/case_logs', {
-  ...sequelizeCrud(CaseLogs),
-  search: async (q, limit) => {
-    const { rows, count } = await CaseLogs.findAndCountAll({
-      limit,
-      where: {
-        [Op.or]: [
-          { id: { [Op.like]: `${q}%` } },
-          { id_case: { [Op.like]: `${q}%` } }
-        ],
-      },
-    })
-    return { rows, count }
-  }
-}))
-
 
 app.get('/', async (req, res) => {
-  res.send('Hello World!')
+  res.send("Hello World!")
 })
 
 app.listen(port, () => {
@@ -304,4 +237,22 @@ function initData() {
   CaseSale.sync()
   CaseInstallation.sync()
   CaseLogs.sync()
+}
+
+async function getPermission(url, verb, rawToken) {
+  let token = rawToken.replace("Bearer ", "")
+  let result = await jwt.verify(token, process.env.SECRET, async (error, decoded) => {
+    if (error) { console.log(error); return [] }
+    else {
+      let authenticatedUser = await UserAuth.findOne({ where: { username: decoded.data, token: token }, include: [UserPermissions] })
+      if (authenticatedUser === null) { return [] }
+      else {
+        let permissions = authenticatedUser.dataValues.UserPermissions
+        let filteredPermissions = permissions.filter(permission => permission.module == url).filter(permission => permission.view == verb && permission.can_view)
+        return filteredPermissions
+      }
+    }
+  })
+  // console.log(`permissionsByUrl '${url}' and verb '${verb}'`, result.length)
+  return Boolean(result.length)
 }

@@ -17,6 +17,7 @@ export const authProvider = {
                 // console.log(json)
                 localStorage.setItem("token", json.token)
                 localStorage.setItem("UserPermissions", JSON.stringify(json.UserPermissions))
+                window.location.reload()
             })
             .catch((error) => { throw new Error('Network error. ' + error.message) })
     },
@@ -34,6 +35,7 @@ export const authProvider = {
         .then(json => {
             localStorage.removeItem("token")
             localStorage.removeItem("UserPermissions")
+            window.location.reload()
         })
         .catch((error) => { throw new Error('Network error. ' + error.message) })
         // return Promise.resolve()

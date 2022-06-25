@@ -3,6 +3,7 @@ import { Admin, Resource } from 'react-admin';
 import simpleRestProvider from 'ra-data-simple-rest';
 import { httpClient } from "./providers/httpClientProvider";
 import { authProvider } from "./providers/authProvider";
+import { hasPermission } from "./common/functions";
 import { CreateUsers } from "./views/users/Create";
 import { ShowUsers } from "./views/users/Show";
 import { ListUsers } from "./views/users/List";
@@ -20,15 +21,25 @@ const dataProvider = simpleRestProvider('http://localhost:4000', httpClient);
 
 
 function App() {
+  console.log("users", "list",hasPermission("users", "list"))
   return (
     <Admin 
       dataProvider={dataProvider} 
       authProvider={authProvider}
     >
-      <Resource name="users"     list={ListUsers}     show={ShowUsers}    create={CreateUsers}     edit={EditUsers}     />
+      <Resource 
+        name="users"
+        list={hasPermission("users", "list")? ListUsers : null}
+        show={hasPermission("users", "show")? ShowUsers : null}
+        create={hasPermission("users", "create")? CreateUsers : null}
+        edit={hasPermission("users", "edit")? EditUsers : null}
+      />
       <Resource name="userauths" list={ListUserAuths} show={ShowUserAuth} create={CreateUserAuths} edit={EditUserAuths} />
     </Admin>
   );
 }
 
 export default App;
+
+
+

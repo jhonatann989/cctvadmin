@@ -1,10 +1,11 @@
 import * as React from "react"
-import { Datagrid, List, NumberField, ShowButton, EditButton, SelectField, TextField, EmailField } from "react-admin"
+import { Datagrid, List, NumberField, SelectField, TextField, EmailField } from "react-admin"
+import { PostBulkActionButtons, ListActions } from "../../common/components"
 
 export const ListUsers = () => {
     return(
         <List>
-            <Datagrid>
+            <Datagrid bulkActionButtons={<PostBulkActionButtons url="users" /> }>
                 <NumberField source="id" fullWidth />
                 <NumberField source="cc" fullWidth />
                 <SelectField
@@ -31,8 +32,7 @@ export const ListUsers = () => {
                     ]}
                     fullWidth
                 />
-                <ShowButton />
-                <EditButton />
+                <ListActions url="users" />
             </Datagrid>
         </List>
     )

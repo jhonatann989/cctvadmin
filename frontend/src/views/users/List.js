@@ -24,11 +24,12 @@ export const ListUsers = () => {
                 <SelectField
                     source="role"
                     choices={[
-                        {id:"customer", name: "Cliente Final"}, 
-                        {id:"technical", name: "Técnico"},
-                        {id:"seller", name: "Vendedor"},
-                        {id:"admin", name: "administrador"},
-                        {id:"owner", name: "Propietario"}
+                        { id: "customer", name: "Cliente Final" },
+                            { id: "reseller", name: "Mayorista" },
+                            { id: "technical", name: "Técnico" },
+                            { id: "seller", name: "Vendedor" },
+                            { id: "administrator", name: "Administrador" },
+                            { id: "owner", name: "Propietario" }
                     ]}
                     fullWidth
                 />

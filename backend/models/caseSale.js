@@ -11,21 +11,15 @@ CaseSale.init({
         autoIncrement: true,
         primaryKey: true
     },
-    id_case: {
-        type: DataTypes.INTEGER,
-    },
     id_responsible: {
         type: DataTypes.INTEGER,
     },
     id_bill: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
     },
     state: {
         type: DataTypes.STRING,
     }
-},{
-    sequelize,
-    tableName: "case_sale",
-})
+},{sequelize})
 
 module.exports = CaseSale;

@@ -30,8 +30,11 @@ export const CreateUsers = () => {
                         source="role"
                         choices={[
                             { id: "customer", name: "Cliente Final" },
-                            { id: "technical", name: "Técnico" },
                             { id: "reseller", name: "Mayorista" },
+                            { id: "technical", name: "Técnico" },
+                            { id: "seller", name: "Vendedor" },
+                            { id: "administrator", name: "Administrador" },
+                            { id: "owner", name: "Propietario" },
                         ]}
                         required
                         fullWidth
@@ -47,10 +50,9 @@ export const CreateUsers = () => {
                         <SelectInput
                             source="role"
                             choices={[
-                                { id: "technical", name: "Técnico" },
-                                { id: "seller", name: "Vendedor" },
-                                { id: "administrator", name: "Administrador" },
-                                { id: "owner", name: "Propietario" },
+                                { id: "worker_by_contract", name: "Worker by contract" },
+                                { id: "worker_internal", name: "Internal Worker" },
+                                { id: "worker_external", name: "External Worker" },
                             ]}
                             required
                             fullWidth

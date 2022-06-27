@@ -11,9 +11,6 @@ CaseLogs.init({
         autoIncrement: true,
         primaryKey: true
     },
-    id_case: {
-        type: DataTypes.INTEGER,
-    },
     id_user: {
         type: DataTypes.INTEGER,
     },
@@ -23,9 +20,6 @@ CaseLogs.init({
     cause: {
         type: DataTypes.STRING,
     },
-},{
-    sequelize,
-    tableName: "case_sale",
-})
+},{sequelize})
 
 module.exports = CaseLogs;

@@ -24,10 +24,11 @@ export const ShowUsers = () => {
                     source="role"
                     choices={[
                         { id: "customer", name: "Cliente Final" },
-                        { id: "technical", name: "Técnico" },
-                        { id: "seller", name: "Vendedor" },
-                        { id: "admin", name: "administrador" },
-                        { id: "owner", name: "Propietario" }
+                            { id: "reseller", name: "Mayorista" },
+                            { id: "technical", name: "Técnico" },
+                            { id: "seller", name: "Vendedor" },
+                            { id: "administrator", name: "Administrador" },
+                            { id: "owner", name: "Propietario" }
                     ]}
                     fullWidth
                 />
@@ -41,10 +42,9 @@ export const ShowUsers = () => {
                         <SelectField
                             source="role"
                             choices={[
-                                { id: "technical", name: "Técnico" },
-                                { id: "seller", name: "Vendedor" },
-                                { id: "administrator", name: "Administrador" },
-                                { id: "owner", name: "Propietario" },
+                                { id: "worker_by_contract", name: "Worker by contract" },
+                                { id: "worker_internal", name: "Internal Worker" },
+                                { id: "worker_external", name: "External Worker" },
                             ]}
                             fullWidth
                         />

@@ -11,9 +11,6 @@ CaseTechnicalStudy.init({
         autoIncrement: true,
         primaryKey: true
     },
-    id_case: {
-        type: DataTypes.INTEGER,
-    },
     id_responsible: {
         type: DataTypes.INTEGER,
     },
@@ -26,9 +23,6 @@ CaseTechnicalStudy.init({
     isFeasable: {
         type: DataTypes.BOOLEAN,
     },
-},{
-    sequelize,
-    tableName: "case_technical_study",
-})
+},{ sequelize})
 
 module.exports = CaseTechnicalStudy;

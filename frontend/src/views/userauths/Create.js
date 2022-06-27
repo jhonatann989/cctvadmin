@@ -2,6 +2,7 @@ import * as React from "react"
 import {
     Create, SimpleForm, TextInput, AutocompleteInput, required, ReferenceInput, ArrayInput, SimpleFormIterator, SelectInput, BooleanInput, 
 } from "react-admin"
+import { visibleListMandatory, arrayShouldNotbeEmpty, isSingleValueAsync } from "../../common/functions"
 
 import { styleGetter, classNameGetter } from "../../common/commonStyles"
 
@@ -23,47 +24,44 @@ export const CreateUserAuths = () => {
                     </ReferenceInput>
                     <TextInput
                         source="username"
-                        required
+                        validate={[required(), async value => await isSingleValueAsync( "userauths", "username", value)]}
                         fullWidth
                     />
                     <TextInput
                         source="password"
                         type="password"
-                        required
                         onChange={e => setPassword(e.target.value)}
                         fullWidth
-                        validate={() => {
+                        validate={[required(), () => {
                             if (password != password2) { return "Passwords must be the same" }
-                        }}
+                        }]}
                     />
                     <TextInput
                         source="password2"
                         type="password"
                         onChange={e => setPassword2(e.target.value)}
-                        required
+                        validate={[required()]}
                         fullWidth
                     />
                 </div>
                 <ArrayInput
                     source="UserPermissions"
-                    defaultValue={[
-                        { module: "users" , view: "list"},
-                        { module: "users" , view: "show"},
-                        { module: "users" , view: "edit"},
-                        { module: "users" , view: "create"},
-                        { module: "users" , view: "delete"}
-                    ]}
                     fullWidth
                     className={classNameGetter("ArrayInput", "formBox", 3)} 
+                    required
+                    validate={[
+                        value => arrayShouldNotbeEmpty(value, "permission"),
+                        value => visibleListMandatory(value), 
+                    ]}
                 >
-                    <SimpleFormIterator disableAdd disableRemove disableReordering >
+                    <SimpleFormIterator disableReordering >
                         <SelectInput
                             source="module"
                             choices={[
                                 { id: "users", name: "Users" },
+                                { id: "cases", name: "Cases" },
                             ]}
-                            required
-                            disabled
+                            validate={[required()]}
                         />
                         <SelectInput
                             source="view"
@@ -74,10 +72,9 @@ export const CreateUserAuths = () => {
                                 { id: "create", name: "Create" },
                                 { id: "delete", name: "Delete" },
                             ]}
-                            required
-                            disabled
+                            validate={[required()]}
                         />
-                        <BooleanInput source="can_view" />
+                        <BooleanInput source="can_view" defaultValue={true} />
                     </SimpleFormIterator>
                 </ArrayInput>
             </SimpleForm>

@@ -16,6 +16,7 @@ User.init({
     },
     cc: {
         type: DataTypes.INTEGER,
+        unique: true
     },
     name: {
         type: DataTypes.STRING,
@@ -24,7 +25,7 @@ User.init({
         type: DataTypes.STRING,
     },
     email: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
     },
     role: {
         type: DataTypes.STRING,

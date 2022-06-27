@@ -14,9 +14,10 @@ export const authProvider = {
                 return response.json();
             })
             .then(json => {
-                // console.log(json)
+                console.log(json)
                 localStorage.setItem("token", json.token)
                 localStorage.setItem("UserPermissions", JSON.stringify(json.UserPermissions))
+                localStorage.setItem("role", json.role)
                 window.location.reload()
             })
             .catch((error) => { throw new Error('Network error. ' + error.message) })
@@ -35,6 +36,7 @@ export const authProvider = {
         .then(json => {
             localStorage.removeItem("token")
             localStorage.removeItem("UserPermissions")
+            localStorage.removeItem("role")
             window.location.reload()
         })
         .catch((error) => { throw new Error('Network error. ' + error.message) })
@@ -64,7 +66,6 @@ export const authProvider = {
         })
             .then(response => {
                 if (response.status < 200 || response.status >= 300) { throw new Error(response.statusText); }
-                let fullName
                 return response.json();
             })
             .catch((error) => { throw new Error('Network error. ' + error.message) }),

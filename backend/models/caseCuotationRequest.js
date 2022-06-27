@@ -11,9 +11,6 @@ CaseQuotationRequest.init({
         autoIncrement: true,
         primaryKey: true
     },
-    id_case: {
-        type: DataTypes.INTEGER,
-    },
     id_responsible: {
         type: DataTypes.INTEGER,
     },
@@ -23,9 +20,6 @@ CaseQuotationRequest.init({
     state: {
         type: DataTypes.STRING,
     }
-},{
-    sequelize,
-    tableName: "case_quotation_request",
-})
+},{sequelize})
 
 module.exports = CaseQuotationRequest;

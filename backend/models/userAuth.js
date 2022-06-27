@@ -12,7 +12,8 @@ UserAuth.init({
         primaryKey: true
     },
     username: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        unique: true
     },
     password: {
         type: DataTypes.STRING,

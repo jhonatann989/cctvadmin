@@ -11,9 +11,6 @@ CaseInstallation.init({
         autoIncrement: true,
         primaryKey: true
     },
-    id_case: {
-        type: DataTypes.INTEGER,
-    },
     id_responsible: {
         type: DataTypes.INTEGER,
     },
@@ -26,9 +23,6 @@ CaseInstallation.init({
     has_been_installed: {
         type: DataTypes.BOOLEAN,
     }
-},{
-    sequelize,
-    tableName: "case_installation",
-})
+},{sequelize})
 
 module.exports = CaseInstallation;

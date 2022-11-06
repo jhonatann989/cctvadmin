@@ -24,7 +24,7 @@ function App() {
   return (
     <Admin 
       dataProvider={dataProvider} 
-      authProvider={authProvider}
+      // authProvider={authProvider}
     >
       <Resource name="userauths" list={ListUserAuths} show={ShowUserAuth} create={CreateUserAuths} edit={EditUserAuths} />
       <Resource 

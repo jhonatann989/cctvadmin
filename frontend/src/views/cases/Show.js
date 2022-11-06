@@ -1,12 +1,14 @@
 import * as React from "react"
-import { NumberField, SelectField, Show, SimpleShowLayout, ReferenceField, TextField, ArrayField, FunctionField, Datagrid, BooleanField } from "react-admin"
+import { 
+    NumberField, SelectField, Show, SimpleShowLayout, 
+    ReferenceField, TextField, ArrayField, FunctionField, Datagrid, BooleanField } from "react-admin"
 import { BACKEND_URL } from "../../common/configs"
 export const ShowCases = () => {
     return (
         <Show>
             <SimpleShowLayout>
                 <NumberField source="id" fullWidth />
-                <ReferenceField source="id_user" reference="users">
+                <ReferenceField source="id_user" reference="users" link="show" >
                     <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
                 </ReferenceField>
                 <SelectField

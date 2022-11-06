@@ -1,61 +1,39 @@
 import * as React from "react"
 import {
-    Create, ReferenceInput, SimpleForm, TextInput, SelectInput, ArrayInput, SimpleFormIterator, required, AutocompleteInput, BooleanInput,
-    useGetList  
+    Create, ReferenceInput, SimpleForm, TextInput, SelectInput, ArrayInput, SimpleFormIterator, required, BooleanInput,
 } from "react-admin"
-import { styleGetter, classNameGetter } from "../../common/commonStyles"
 
 
 export const CreateCases = () => {
     // const [technical, setTechnicals] = React.useState([])
-    let technicalData = useGetList('users',  { pagination: { page: 1, perPage: 1000 }, filter: {role: "technical"} });
-    let customerData = useGetList('users',  { pagination: { page: 1, perPage: 1000 }, filter: {role: "customer"} });
     return (
         <Create redirect="/cases">
-            <SimpleForm>
-                {/* <div style={styleGetter("formBox")}> */}
-                    {/* <AutocompleteInput source="UserId" choices={customerData.data} optionText="cc" /> */}
-                    <ReferenceInput
-                        source="id_user"
-                        reference="users"
-                        filter={{role: "customer"}}
-                        perPage={1000}
-                        validate={[required()]}
-                    >
-                        <SelectInput optionText="cc" fullWidth />
-                    </ReferenceInput>
-                    {/* <SelectInput
-                        source="state"
-                        defaultValue={"technical_study"}
-                        choices={[
-                            { id: "technical_study", name: "Technical Study" },
-                            { id: "quotation_request", name: "Quotation Request" },
-                            { id: "sale", name: "Sale" },
-                            { id: "installation", name: "Instalation" },
-                        ]}
-                        required
-                        disabled
-                        fullWidth
-                    /> */}
-                {/* </div> */}
-                <ArrayInput 
+            <SimpleForm validate={validateUserCreation}>
+                <ReferenceInput
+                    source="id_user"
+                    reference="users"
+                    filter={{ role: "customer" }}
+                    perPage={1000}
+                    validate={[required()]}
+                >
+                    <SelectInput optionText={option => `${option.role}: ${option.name} - ${option.cc}`} fullWidth />
+                </ReferenceInput>
+                <ArrayInput
                     source="CaseTechnicalStudies"
-                    className={classNameGetter("ArrayInput", "formBox", 3)}  
-                    defaultValue={[{}]} 
-                    fullWidth 
+                    defaultValue={[{}]}
+                    fullWidth
                 >
                     <SimpleFormIterator disableAdd disableRemove disableReordering >
-                        {/* <AutocompleteInput source="id_responsible" choices={technicalData.data} optionText="cc" /> */}
                         <ReferenceInput
                             source="id_responsible"
                             reference="users"
-                            filter={{role: "technical"}}
+                            filter={{ role: "technical" }}
                             perPage={1000}
                             validate={[required()]}
                         >
-                            <SelectInput optionText="cc" />
+                            <SelectInput optionText={option => `${option.role}: ${option.name} - ${option.cc}`} fullWidth />
                         </ReferenceInput>
-                        <TextInput source="evaluation" fullwidth disabled />
+                        <TextInput source="evaluation" fullWidth disabled style={{ display: "none" }} />
                         <SelectInput
                             source="state"
                             defaultValue={"pending"}
@@ -67,6 +45,7 @@ export const CreateCases = () => {
                             required
                             disabled
                             fullWidth
+                            style={{ display: "none" }}
                         />
                         <BooleanInput source="isFeasable" disabled defaultValue={false} />
                     </SimpleFormIterator>
@@ -74,4 +53,12 @@ export const CreateCases = () => {
             </SimpleForm>
         </Create>
     )
+}
+
+const validateUserCreation = values => {
+    let errors = {};
+    if (values.CaseTechnicalStudies && values.CaseTechnicalStudies[0].id_responsible == "") {
+        errors.CaseTechnicalStudies = 'Please Choose a Technical worker';
+    }
+    return errors
 }

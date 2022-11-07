@@ -1,25 +1,28 @@
-const { DataTypes, Sequelize, Model } = require('sequelize');
-const server = require("./../configs/sequelizeServer")
-const sequelize = new Sequelize(server.database, server.username, server.password, server.params)
+const { DataTypes, Model } = require('sequelize');
 
+module.exports = (sequelize) => {
+    class UserPermissions extends Model {
+        static associate(models) {
+            UserPermissions.belongsTo(models.UserAuth)
+        }
+    }
 
-class UserPermissions extends Model {}
+    UserPermissions.init({
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        module: {
+            type: DataTypes.STRING,
+        },
+        view: {
+            type: DataTypes.STRING,
+        },
+        can_view: {
+            type: DataTypes.BOOLEAN,
+        },
+    },{ sequelize })
 
-UserPermissions.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    module: {
-        type: DataTypes.STRING,
-    },
-    view: {
-        type: DataTypes.STRING,
-    },
-    can_view: {
-        type: DataTypes.BOOLEAN,
-    },
-},{ sequelize})
-
-module.exports = UserPermissions;
+    return UserPermissions;
+}

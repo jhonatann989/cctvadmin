@@ -1,50 +1,52 @@
-const { DataTypes, Sequelize, Model } = require('sequelize');
-const server = require("./../configs/sequelizeServer")
-const sequelize = new Sequelize(server.database, server.username, server.password, server.params)
-const UserPermissions = require("./userPermissions")
+const { DataTypes, Model } = require('sequelize');
+
 const bcrypt = require("bcrypt")
 
-class UserAuth extends Model { }
-
-UserAuth.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    username: {
-        type: DataTypes.STRING,
-        unique: true
-    },
-    password: {
-        type: DataTypes.STRING,
-    },
-    token: {
-        type: DataTypes.STRING,
-    },
-}, {
-    instanceMethods: {
-        isValidPassword: (password) => (bcrypt.compareSync(password, this.password))
-    },
-    sequelize
-})
-
-UserAuth.addHook("beforeCreate", async (user) => {
-    if (user.password) {
-        const salt = await bcrypt.genSaltSync(10, 'a');
-        user.password = bcrypt.hashSync(user.password, salt);
+module.exports = (sequelize) => {
+    class UserAuth extends Model {
+        static associate(models) {
+            UserAuth.belongsTo(models.Users)
+            UserAuth.hasMany(models.UserPermissions)
+        }
     }
-})
-UserAuth.addHook("beforeUpdate", async (user) => {
-    if (user.password) {
-        const salt = await bcrypt.genSaltSync(10, 'a');
-        user.password = bcrypt.hashSync(user.password, salt);
-    }
-})
 
-UserAuth.prototype.isValidPassword = async (password, hash) => (await bcrypt.compareSync(password, hash))
+    UserAuth.init({
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        username: {
+            type: DataTypes.STRING,
+            unique: true
+        },
+        password: {
+            type: DataTypes.STRING,
+        },
+        token: {
+            type: DataTypes.STRING,
+        },
+    }, {
+        instanceMethods: {
+            isValidPassword: (password) => (bcrypt.compareSync(password, this.password))
+        },
+        sequelize
+    })
 
-UserAuth.hasMany(UserPermissions)
-UserPermissions.belongsTo(UserAuth)
+    UserAuth.addHook("beforeCreate", async (user) => {
+        if (user.password) {
+            const salt = await bcrypt.genSaltSync(10, 'a');
+            user.password = bcrypt.hashSync(user.password, salt);
+        }
+    })
+    UserAuth.addHook("beforeUpdate", async (user) => {
+        if (user.password) {
+            const salt = await bcrypt.genSaltSync(10, 'a');
+            user.password = bcrypt.hashSync(user.password, salt);
+        }
+    })
 
-module.exports = UserAuth;
+    UserAuth.prototype.isValidPassword = async (password, hash) => (await bcrypt.compareSync(password, hash))
+
+    return UserAuth;
+}

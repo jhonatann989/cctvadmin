@@ -1,6 +1,4 @@
-const UserAuth = require("../models/userAuth")
-const UserPermissions = require("../models/userPermissions")
-
+const {UserAuth, UserPermissions} = require("../models")
 
 const userauthsCrudVerbs = {
     getList: async ({ filter, limit, offset, order }) =>

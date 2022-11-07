@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const UserAuth = require("../models/userAuth")
-const UserPermissions = require("../models/userPermissions")
+const {UserPermissions, UserAuth} = require("../models")
 
 const getPermission = async (url, verb, rawToken) => {
     let token = rawToken.replace("Bearer ", "")

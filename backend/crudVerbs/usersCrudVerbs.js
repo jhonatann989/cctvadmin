@@ -1,8 +1,11 @@
 const { Op } = require('sequelize');
 const getPermission = require("../helperFunctions/getPermitions")
-const Users = require("../models/user")
-const UserDatas = require("../models/userDatas")
-const UserStaff = require("../models/userStaff")
+
+const {
+  UserStaff,
+  UserDatas,
+  Users
+} = require("../models")
 
 const usersCrudVerbs = {
     getList: async ({ filter, limit, offset, order }, {req}) => {

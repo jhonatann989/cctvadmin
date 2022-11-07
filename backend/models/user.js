@@ -1,45 +1,42 @@
-const { DataTypes, Sequelize, Model } = require('sequelize');
-const server = require("./../configs/sequelizeServer");
-const UserAuth = require('./userAuth');
-const sequelize = new Sequelize(server.database, server.username, server.password, server.params)
-const UserDatas = require("./userDatas")
-const UserStaff = require("./userStaff")
+const { DataTypes, Model } = require('sequelize');
 
+module.exports = (sequelize) => {
+    class Users extends Model {
+        static associate(models) {
+            Users.hasOne(models.UserAuth);
+            Users.hasMany(models.UserDatas)
+            Users.hasMany(models.UserStaff)
 
-class User extends Model {}
+            // UserStaff.belongsTo(Users)
+        }
+    }
 
-User.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    cc: {
-        type: DataTypes.INTEGER,
-        unique: true
-    },
-    name: {
-        type: DataTypes.STRING,
-    },
-    cc_type: {
-        type: DataTypes.STRING,
-    },
-    email: {
-        type: DataTypes.STRING,
-    },
-    role: {
-        type: DataTypes.STRING,
-    },
-},{
-    sequelize,
-    tableName: "user"
-})
+    Users.init({
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        cc: {
+            type: DataTypes.INTEGER,
+            unique: true
+        },
+        name: {
+            type: DataTypes.STRING,
+        },
+        cc_type: {
+            type: DataTypes.STRING,
+        },
+        email: {
+            type: DataTypes.STRING,
+        },
+        role: {
+            type: DataTypes.STRING,
+        },
+    },{
+        sequelize,
+        tableName: "user"
+    })
 
-User.hasOne(UserAuth)
-UserAuth.belongsTo(User)
-User.hasMany(UserDatas)
-UserDatas.belongsTo(User)
-User.hasMany(UserStaff)
-UserStaff.belongsTo(User)
-
-module.exports = User;
+    return Users;
+}

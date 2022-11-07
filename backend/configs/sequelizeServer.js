@@ -1,4 +1,3 @@
-const dotenv = require('dotenv').config();
 const server = {
     params : {
         host: process.env.DB_HOST,

@@ -2,12 +2,15 @@ const fs = require("fs")
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
 const getPermission = require("../helperFunctions/getPermitions")
-const Case = require("../models/case")
-const CaseTechnicalStudy = require("../models/caseTechnicalStudy")
-const CaseQuotationRequest = require("../models/caseCuotationRequest")
-const CaseSale = require("../models/caseSale")
-const CaseInstallation = require("../models/caseInstalation")
-const CaseLogs = require("../models/caseLogs");
+
+const {
+  CaseLogs,
+  CaseInstallation,
+  CaseSale,
+  CaseQuotationRequest,
+  CaseTechnicalStudy,
+  Case
+} = require("../models/");
 
 const casesCrudVerbs = {
   getList: async ({ filter, limit, offset, order }, { req }) => {

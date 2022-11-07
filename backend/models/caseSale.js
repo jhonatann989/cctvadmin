@@ -1,25 +1,28 @@
-const { DataTypes, Sequelize, Model } = require('sequelize');
-const server = require("./../configs/sequelizeServer")
-const sequelize = new Sequelize(server.database, server.username, server.password, server.params)
+const { DataTypes, Model } = require('sequelize');
 
-
-class CaseSale extends Model {}
-
-CaseSale.init({
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    id_responsible: {
-        type: DataTypes.INTEGER,
-    },
-    id_bill: {
-        type: DataTypes.STRING,
-    },
-    state: {
-        type: DataTypes.STRING,
+module.exports = (sequelize) => {
+    class CaseSale extends Model {
+        static associate(models) {
+            CaseSale.belongsTo(models.Case)
+        }
     }
-},{sequelize})
 
-module.exports = CaseSale;
+    CaseSale.init({
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        id_responsible: {
+            type: DataTypes.INTEGER,
+        },
+        id_bill: {
+            type: DataTypes.STRING,
+        },
+        state: {
+            type: DataTypes.STRING,
+        }
+    },{sequelize})
+
+    return CaseSale;
+}

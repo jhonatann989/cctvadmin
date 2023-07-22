@@ -1,6 +1,6 @@
 import * as React from "react"
 import {
-    ReferenceInput, Edit, required, SimpleForm, TextInput, AutocompleteInput, SimpleFormIterator, ArrayInput, SelectInput, BooleanInput
+    ReferenceInput, Edit, required, SimpleForm, TextInput, AutocompleteInput, SimpleFormIterator, ArrayInput, SelectInput, BooleanInput, RadioButtonGroupInput
 } from "react-admin"
 import { styleGetter, classNameGetter } from "../../common/commonStyles"
 import { visibleListMandatory, arrayShouldNotbeEmpty } from "../../common/functions"
@@ -28,13 +28,12 @@ export const EditUserAuths = () => {
                 <ArrayInput
                     source="UserPermissions"
                     fullWidth
-                    className={classNameGetter("ArrayInput", "formBox", 3)} 
                     validate={[
                         value => arrayShouldNotbeEmpty(value, "permission"),
                         value => visibleListMandatory(value), 
                     ]}
                 >
-                    <SimpleFormIterator disableReordering >
+                    <SimpleFormIterator disableReordering fullWidth>
                         <SelectInput
                             source="module"
                             choices={[
@@ -42,8 +41,9 @@ export const EditUserAuths = () => {
                                 { id: "cases", name: "Cases" },
                             ]}
                             validate={[required()]}
+                            fullWidth
                         />
-                        <SelectInput
+                        <RadioButtonGroupInput
                             source="view"
                             choices={[
                                 { id: "list", name: "List" },
@@ -53,8 +53,9 @@ export const EditUserAuths = () => {
                                 { id: "delete", name: "Delete" },
                             ]}
                             validate={[required()]}
+                            fullWidth
                         />
-                        <BooleanInput source="can_view" defaultValue={true} />
+                        <BooleanInput source="can_view" defaultValue={true} fullWidth />
                     </SimpleFormIterator>
                 </ArrayInput>
             </SimpleForm>

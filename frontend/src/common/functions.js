@@ -89,3 +89,32 @@ export async function getBase64FromDomInput(domId) {
     reader.onerror = error => { console.log(error); resolve("") }
   })
 }
+
+export async function getBase64FromEventInput(event) {
+  return new Promise((resolve, reject) => {
+    try {
+      var file = event.target.files[0]
+      var reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => { console.log(error); resolve("") }
+    } catch(error) {
+      console.log(error)
+      resolve("")
+    }
+  })
+}
+
+export async function getBase64FromRawInput(rawFile) {
+  return new Promise((resolve, reject) => {
+    try {
+      var reader = new FileReader()
+      reader.readAsDataURL(rawFile)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => { console.log(error); resolve("") }
+    } catch(error) {
+      console.log(error)
+      resolve("")
+    }
+  })
+}

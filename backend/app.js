@@ -1,9 +1,11 @@
 require('dotenv').config();
-
 const express = require('express')
+const fileUpload = require("express-fileupload");
+const { v4: uuidv4 } = require('uuid');
 const cors = require('cors')
 const { crud } = require("express-crud-router")
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const port = process.env.PORT || 4000;
 
 const models = require('./models');
@@ -20,6 +22,7 @@ app.use(cors({ origin: 'http://localhost:3000', }))
 app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({limit: '50mb'}));
 app.use(express.static('static'));
+app.use(fileUpload());
 
 app.get('/static/:filename', function(req, res){
   const file = `${__dirname}/static/${req.params.filename}`;
@@ -123,6 +126,29 @@ app.use(crud('/userauths', userauthsCrudVerbs))
 
 app.use(crud('/cases', casesCrudVerbs))
 
+app.post("/static/upload", (req, res) => {
+  let upfile = req.files.file
+  console.log(upfile)
+  let extension = upfile.name.split(".").pop()
+  let updest = `static/${upfile.name}`;
+
+  if(upfile.name.includes("create-uuid")) {
+    updest = `static/${uuidv4()}.${extension}`;
+  }
+  upfile.mv(`${__dirname}/${updest}`, err => {
+    if(err) {
+      return res.status(500).send(err);
+    }
+    res.status(200).send({
+      "errno": 0,
+      "code": "",
+      "syscall": "",
+      "path": updest
+  });
+  })
+})
+
+
 
 app.get('/', async (req, res) => {
   res.send("Hello World!")
@@ -142,23 +168,44 @@ async function initData() {
 
   await models.sequelize.sync({ force:true })
 
-  const userInfo = await models.Users.create({
-    cc: 1232400204,
-    name: "Jhonatan Morales",
-    cc_type: "CC",
-    email: "jhonatann989@gmail.com",
-    role: "customer"
-  });
+  let initData = [
+    {
+      cc: 1232400204,
+      name: "Jhonatan Morales",
+      cc_type: "CC",
+      email: "jhonatann989@gmail.com",
+      role: "customer"
+    },
+    {
+      cc: 1094352748,
+      name: "Josué Morales",
+      cc_type: "CC",
+      email: "moralescjosued@gmail.com",
+      role: "technical"
+    },
+    {
+      cc: 13386011,
+      name: "Rodolfo Morales",
+      cc_type: "CC",
+      email: "pastorodolfo1@gmail.com",
+      role: "seller"
+    },
+  ]
+
+  for (let singledata of initData) {
+    await models.Users.create(singledata)
+  }
+
 
   await models.UserAuth.create({
-    username: "root",
-    password: "root",
+    username: "admin",
+    password: "dvr12345",
     UserId: 1
   })
 }
 
-models.sequelize.sync({ force:true })
-  .then(initData)
+models.sequelize.sync()
+  //.then(initData)
   .then( async () => {
     app.listen(port, () => {
       console.log(`App listening on port ${port}`)

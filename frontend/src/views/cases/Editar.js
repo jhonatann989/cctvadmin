@@ -4,19 +4,13 @@ import {
     ArrayField, Datagrid, ReferenceField, FunctionField, TextField, SelectField, BooleanField
 } from "react-admin"
 import { styleGetter, classNameGetter } from "../../common/commonStyles"
-import { getBase64FromDomInput } from "../../common/functions"
+import { getBase64FromDomInput, getBase64FromEventInput } from "../../common/functions"
 import { BACKEND_URL } from "../../common/configs"
 import { Button } from '@mui/material';
 import { ModeEdit, EditOff } from '@mui/icons-material';
+import { FileInput, ServerSideFileInput } from "../../common/components"
 
 export const EditCases = () => {
-    const dataTransformer = async (data) => {
-        if (fileAsBase64) {
-            data.CaseQuotationRequests[0].quotation_doc = await getBase64FromDomInput("quotation_doc")
-        }
-        return data
-    }
-    const [fileAsBase64, setFileAsBase64] = React.useState("")
     const [technicalStudyState, setTechnicalStudyState] = React.useState("")
     const [caseQuotationLength, setCaseQuotationLength] = React.useState(0)
     const [quotationRequestState, setQuotationRequestState] = React.useState("")
@@ -27,7 +21,7 @@ export const EditCases = () => {
     const [installationState, setInstallationState] = React.useState("")
     const [installationLength, setInstallationLength] = React.useState("")
     return (
-        <Edit redirect="/cases" transform={dataTransformer}>
+        <Edit redirect="/cases">
             <SimpleForm>
                 <FormDataConsumer>
                     {({ formData }) => {
@@ -62,12 +56,13 @@ export const EditCases = () => {
                 >
                     <SelectInput optionText="cc" disabled fullWidth style={{ display: "none" }} />
                 </ReferenceInput>
+                <hr />
                 <CaseTechnicalStudies technicalStudyState={technicalStudyState} />
-                <br />
-                {technicalStudyState == "done" && <CaseQuotationRequests salesState={salesState} salesLength={salesLength} setSalesLength={setSalesLength} />}
-                <br />
+                <hr />
+                {technicalStudyState == "done" && <CaseQuotationRequests CaseQuotationRequestsState={quotationRequestState} caseQuotationLength={caseQuotationLength} setCaseQuotationRequestsLength={setCaseQuotationLength}/>}
+                <hr />
                 {quotationRequestState == "done" && <CaseSales salesState={salesState} salesLength={salesLength} setSalesLength={setSalesLength} />}
-                <br/>
+                <hr/>
                 {salesState == "done" && isFeasable && <CaseInstallations salesLength={installationLength} setInstallationLength={setInstallationLength} installationState={installationState} />}
             </SimpleForm>
         </Edit>
@@ -78,27 +73,28 @@ const CaseTechnicalStudies = (props) => {
     const { technicalStudyState } = props
     const [isEditable, setIsEditable] = React.useState(false)
     return (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
                 source="CaseTechnicalStudies"
-                className={classNameGetter("ArrayInput", "formBox", 3)}
                 defaultValue={[{}]}
                 fullWidth
                 style={{ display: isEditable ? "block" : "none" }}
             >
-                <SimpleFormIterator disableAdd disableRemove disableReordering >
+                <SimpleFormIterator disableAdd disableRemove disableReordering fullWidth>
                     <ReferenceInput
                         source="id_responsible"
                         reference="users"
                         filter={{ role: "technical" }}
                         perPage={1000}
                         validate={[required()]}
+                        
                     >
-                        <SelectInput optionText="cc" disabled />
+                        <SelectInput optionText="cc" disabled fullWidth />
                     </ReferenceInput>
                     <TextInput
                         source="evaluation"
                         disabled={technicalStudyState === "ongoing" ? false : true}
+                        fullWidth
                     />
                     <SelectInput
                         source="state"
@@ -108,13 +104,14 @@ const CaseTechnicalStudies = (props) => {
                             { id: "done", name: "Done" },
                         ]}
                         validate={[required()]}
+                        fullWidth
                     />
-                    <BooleanInput source="isFeasable" disabled={technicalStudyState !== "done" ? false : true} />
+                    <BooleanInput fullWidth source="isFeasable" disabled={technicalStudyState !== "done" ? false : true} />
                 </SimpleFormIterator>
             </ArrayInput>
             {!isEditable &&
-                <ArrayField source="CaseTechnicalStudies">
-                    <Datagrid bulkActionButtons={false}>
+                <ArrayField source="CaseTechnicalStudies" >
+                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} >
                         <ReferenceField source="id_responsible" reference="users">
                             <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
                         </ReferenceField>
@@ -141,21 +138,25 @@ const CaseTechnicalStudies = (props) => {
 }
 
 const CaseQuotationRequests = (props) => {
-    const { salesState, salesLength, setSalesLength } = props
+    const { 
+        CaseQuotationRequestsState, 
+        caseQuotationLength, 
+        setCaseQuotationRequestsLength, 
+    } = props
     const [isEditable, setIsEditable] = React.useState(false)
     return (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
-                source="CaseSales"
-                className={classNameGetter("ArrayInput", "formBox", 3)}
+                source="CaseQuotationRequests"
                 fullWidth
-                validate={[value => setSalesLength(value.length)]}
+                validate={[value => setCaseQuotationRequestsLength(value.length)]}
                 style={{ display: isEditable ? "block" : "none" }}
             >
                 <SimpleFormIterator
-                    disableAdd={salesLength === 1 ? true : false}
+                    disableAdd={caseQuotationLength === 1 ? true : false}
                     disableRemove
                     disableReordering
+                    fullWidth
                 >
                     <ReferenceInput
                         source="id_responsible"
@@ -164,10 +165,15 @@ const CaseQuotationRequests = (props) => {
                         perPage={1000}
                         validate={[required()]}
                     >
-                        <SelectInput optionText="cc" disabled={salesState == "pending" ? false : true} />
+                        <SelectInput fullWidth optionText="cc" disabled={CaseQuotationRequestsState == "pending" ? false : true} />
                     </ReferenceInput>
-                    <TextInput source="id_bill" disabled={salesState !== "done" ? false : true} />
-                    <TextInput source="id_bill" />
+                    {/* <FileInput source="quotation_doc" accept=".pdf" /> */}
+                    <ServerSideFileInput 
+                        source="quotation_doc" 
+                        accept=".pdf" 
+                        uploadUri="static/upload" 
+                        fullWidth
+                    />
                     <SelectInput
                         source="state"
                         defaultValue="pending"
@@ -177,6 +183,7 @@ const CaseQuotationRequests = (props) => {
                             { id: "done", name: "Done" },
                         ]}
                         validate={[required()]}
+                        fullWidth
                     />
                 </SimpleFormIterator>
             </ArrayInput>

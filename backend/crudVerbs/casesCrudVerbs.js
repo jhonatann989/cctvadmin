@@ -62,16 +62,16 @@ const casesCrudVerbs = {
       if (Array.isArray(body.CaseQuotationRequests) && body.CaseQuotationRequests.length) {
         let attachment = ``
         let localBody = { ...body.CaseQuotationRequests[0], ...{ CaseId: id } }
-        console.log(attachment)
-        if (body.CaseQuotationRequests.length && body.CaseQuotationRequests[0].quotation_doc) {
-          attachment = `static/${uuidv4()}.pdf`
-          base64Data = localBody.quotation_doc.replace(/^data:application\/pdf;base64,/, ""),
-            binaryData = new Buffer(base64Data, 'base64').toString('binary');
-          fs.writeFile(attachment, binaryData, "binary", function (err) {
-            console.log(err); // writes out file without error, but it's not a valid image
-          });
-          localBody = { ...localBody, ...{ quotation_doc: attachment } }
-        }
+        // console.log(attachment)
+        // if (body.CaseQuotationRequests.length && body.CaseQuotationRequests[0].quotation_doc) {
+        //   attachment = `static/${uuidv4()}.pdf`
+        //   base64Data = localBody.quotation_doc.replace(/^data:application\/pdf;base64,/, ""),
+        //     binaryData = new Buffer(base64Data, 'base64').toString('binary');
+        //   fs.writeFile(attachment, binaryData, "binary", function (err) {
+        //     console.log(err); // writes out file without error, but it's not a valid image
+        //   });
+        //   localBody = { ...localBody, ...{ quotation_doc: attachment } }
+        // }
         let caseQuitationExists = await CaseQuotationRequest.findOne({ where: { CaseId: id } })
         if (caseQuitationExists == null) {
           CaseQuotationRequest.create(localBody)

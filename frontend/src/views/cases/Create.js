@@ -22,16 +22,18 @@ export const CreateCases = () => {
                     source="CaseTechnicalStudies"
                     defaultValue={[{}]}
                     fullWidth
+                    
                 >
-                    <SimpleFormIterator disableAdd disableRemove disableReordering >
+                    <SimpleFormIterator disableAdd disableRemove disableReordering fullWidth>
                         <ReferenceInput
                             source="id_responsible"
                             reference="users"
                             filter={{ role: "technical" }}
                             perPage={1000}
                             validate={[required()]}
+                            fullWidth
                         >
-                            <SelectInput optionText={option => `${option.role}: ${option.name} - ${option.cc}`} fullWidth />
+                            <SelectInput fullWidth optionText={option => `${option.role}: ${option.name} - ${option.cc}`} />
                         </ReferenceInput>
                         <TextInput source="evaluation" fullWidth disabled style={{ display: "none" }} />
                         <SelectInput
@@ -47,7 +49,7 @@ export const CreateCases = () => {
                             fullWidth
                             style={{ display: "none" }}
                         />
-                        <BooleanInput source="isFeasable" disabled defaultValue={false} />
+                        <BooleanInput fullWidth source="isFeasable" disabled defaultValue={false} />
                     </SimpleFormIterator>
                 </ArrayInput>
             </SimpleForm>

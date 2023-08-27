@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
         },
         installation_report: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
         },
         state: {
             type: DataTypes.STRING,

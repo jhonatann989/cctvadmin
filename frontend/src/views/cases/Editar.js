@@ -1,51 +1,22 @@
-import * as React from "react"
+import React, {useState} from "react"
 import {
     SelectInput, Edit, ReferenceInput, SimpleForm, TextInput, ArrayInput, SimpleFormIterator, required, BooleanInput, FormDataConsumer,
-    ArrayField, Datagrid, ReferenceField, FunctionField, TextField, SelectField, BooleanField
+    ArrayField, Datagrid, ReferenceField, FunctionField, TextField, SelectField, BooleanField, useRecordContext, RadioButtonGroupInput, useStore
 } from "react-admin"
-import { styleGetter, classNameGetter } from "../../common/commonStyles"
-import { getBase64FromDomInput, getBase64FromEventInput } from "../../common/functions"
-import { BACKEND_URL } from "../../common/configs"
-import { Button } from '@mui/material';
+import { classNameGetter } from "../../common/commonStyles"
+import { BACKEND_URL, quotation_states, states } from "../../common/configs"
+import { Button, Box } from '@mui/material';
 import { ModeEdit, EditOff } from '@mui/icons-material';
-import { FileInput, ServerSideFileInput } from "../../common/components"
+import { ServerSideFileInput, EmptyMessageDatagrid } from "../../common/components"
+import { getRoleNameFromId } from "../../common/functions";
 
 export const EditCases = () => {
-    const [technicalStudyState, setTechnicalStudyState] = React.useState("")
-    const [caseQuotationLength, setCaseQuotationLength] = React.useState(0)
-    const [quotationRequestState, setQuotationRequestState] = React.useState("")
-    const [isFeasable, setIsFeasable] = React.useState(false)
-    const [quotationRequestUrl, setQuotationRequestUrl] = React.useState("")
-    const [salesState, setSalesState] = React.useState("")
-    const [salesLength, setSalesLength] = React.useState("")
-    const [installationState, setInstallationState] = React.useState("")
-    const [installationLength, setInstallationLength] = React.useState("")
+
     return (
         <Edit redirect="/cases">
             <SimpleForm>
-                <FormDataConsumer>
-                    {({ formData }) => {
-                        if (Array.isArray(formData.CaseTechnicalStudies) && formData.CaseTechnicalStudies.length) {
-                            setTechnicalStudyState(formData.CaseTechnicalStudies[0].state)
-                            setIsFeasable(formData.CaseTechnicalStudies[0].isFeasable)
-                        }
-                        if (Array.isArray(formData.CaseQuotationRequests) && formData.CaseQuotationRequests.length) {
-                            setQuotationRequestState(formData.CaseQuotationRequests[0].state)
-                            setQuotationRequestUrl(formData.CaseQuotationRequests[0].quotation_doc)
-                            setCaseQuotationLength(formData.CaseQuotationRequests.length)
-                        }
-                        if (Array.isArray(formData.CaseSales) && formData.CaseSales.length) {
-                            setSalesState(formData.CaseSales[0].state)
-                            setSalesLength(formData.CaseSales.length)
-                        }
-                        if (Array.isArray(formData.CaseInstallations) && formData.CaseInstallations.length) {
-                            setInstallationState(formData.CaseInstallations[0].state)
-                            setInstallationLength(formData.CaseInstallations.length)
-                        }
-                    }}
-                </FormDataConsumer>
-                <ReferenceField source="id_user" reference="users" link="show" >
-                    <FunctionField render={record => record && `Cliente: ${record.cc} - ${record.name}`} />
+                <ReferenceField source="id_user" reference="users" link={false} >
+                    <FunctionField render={record => record && `${getRoleNameFromId(record.role)}: ${record.name} - ${record.cc}`} />
                 </ReferenceField>
                 <ReferenceInput
                     source="id_user"
@@ -54,24 +25,49 @@ export const EditCases = () => {
                     perPage={1000}
                     validate={[required()]}
                 >
-                    <SelectInput optionText="cc" disabled fullWidth style={{ display: "none" }} />
+                    <SelectInput optionText={option => `${getRoleNameFromId(option.role)}: ${option.name} - ${option.cc}`} disabled fullWidth style={{ display: "none" }} />
                 </ReferenceInput>
-                <hr />
-                <CaseTechnicalStudies technicalStudyState={technicalStudyState} />
-                <hr />
-                {technicalStudyState == "done" && <CaseQuotationRequests CaseQuotationRequestsState={quotationRequestState} caseQuotationLength={caseQuotationLength} setCaseQuotationRequestsLength={setCaseQuotationLength}/>}
-                <hr />
-                {quotationRequestState == "done" && <CaseSales salesState={salesState} salesLength={salesLength} setSalesLength={setSalesLength} />}
-                <hr/>
-                {salesState == "done" && isFeasable && <CaseInstallations salesLength={installationLength} setInstallationLength={setInstallationLength} installationState={installationState} />}
+                <FormDataConsumer>
+                    {({formData}) => (
+                        <>
+                            <br />
+                            <CaseTechnicalStudies  />
+                            <br />
+                            <CaseQuotationRequests CaseQuotationRequests={formData.CaseQuotationRequests} />
+                            <br />
+                            <CaseSales CaseSales={formData.CaseSales} />
+                            <br/>
+                            <CaseInstallations CaseInstallations={formData.CaseInstallations}  />
+                        </>
+                    )}
+                </FormDataConsumer>
             </SimpleForm>
         </Edit>
     )
 }
 
 const CaseTechnicalStudies = (props) => {
-    const { technicalStudyState } = props
+    const {CaseTechnicalStudies} = useRecordContext()
+    let technicalStudyState = CaseTechnicalStudies?.length? CaseTechnicalStudies[0].state : ""
     const [isEditable, setIsEditable] = React.useState(false)
+    const validateArrayForm = (arrayValues) => {
+        let errors = []
+        for(let valueObj of arrayValues) {
+            if(typeof valueObj.id_responsible != "number") {
+                errors.push("a responsible is required")
+            }
+
+            if(!valueObj.evaluation && valueObj.state == "done") {
+                errors.push("A valid evaluation is required")
+            }
+
+            if(!valueObj.state) {
+                errors.push("a valid state is required")
+            }
+        }
+        
+        return errors.join(", ")
+    }
     return (
         <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
@@ -79,8 +75,15 @@ const CaseTechnicalStudies = (props) => {
                 defaultValue={[{}]}
                 fullWidth
                 style={{ display: isEditable ? "block" : "none" }}
+                isRequired
+                validate={[validateArrayForm]}
             >
-                <SimpleFormIterator disableAdd disableRemove disableReordering fullWidth>
+                <SimpleFormIterator 
+                    disableAdd 
+                    disableRemove
+                    disableReordering 
+                    fullWidth
+                >
                     <ReferenceInput
                         source="id_responsible"
                         reference="users"
@@ -89,72 +92,88 @@ const CaseTechnicalStudies = (props) => {
                         validate={[required()]}
                         
                     >
-                        <SelectInput optionText="cc" disabled fullWidth />
+                        <SelectInput optionText={option => `${getRoleNameFromId(option.role)}: ${option.name} - ${option.cc}`} disabled fullWidth />
                     </ReferenceInput>
                     <TextInput
                         source="evaluation"
-                        disabled={technicalStudyState === "ongoing" ? false : true}
+                        multiline
                         fullWidth
                     />
-                    <SelectInput
+                    <RadioButtonGroupInput
                         source="state"
-                        choices={[
-                            { id: "pending", name: "Pending" },
-                            { id: "ongoing", name: "Ongoing" },
-                            { id: "done", name: "Done" },
-                        ]}
+                        choices={states}
                         validate={[required()]}
                         fullWidth
                     />
-                    <BooleanInput fullWidth source="isFeasable" disabled={technicalStudyState !== "done" ? false : true} />
+                    <BooleanInput fullWidth source="isFeasable" />
                 </SimpleFormIterator>
             </ArrayInput>
             {!isEditable &&
-                <ArrayField source="CaseTechnicalStudies" >
-                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} >
-                        <ReferenceField source="id_responsible" reference="users">
-                            <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
+                <ArrayField source="CaseTechnicalStudies"  disableReordering>
+                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} empty={<EmptyMessageDatagrid phaseName="El estudio técnico no se ha realizado." />} >
+                        <ReferenceField source="id_responsible" reference="users" link={false}>
+                            <FunctionField render={record => record && `${getRoleNameFromId(record.role)}: ${record.name} - ${record.cc}`} />
                         </ReferenceField>
                         <TextField source="evaluation" />
                         <SelectField
                             source="state"
-                            choices={[
-                                { id: "pending", name: "Pending" },
-                                { id: "ongoing", name: "Ongoing" },
-                                { id: "done", name: "Done" },
-                            ]}
+                            choices={states}
                             fullWidth
                         />
                         <BooleanField source="isFeasable" />
+                        
                     </Datagrid>
                 </ArrayField>
             }
-            <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
-                {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
-            </Button>
+            {technicalStudyState != "done" && 
+                <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
+                    {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
+                </Button>
+            }
         </div>
 
     )
 }
 
 const CaseQuotationRequests = (props) => {
-    const { 
-        CaseQuotationRequestsState, 
-        caseQuotationLength, 
-        setCaseQuotationRequestsLength, 
-    } = props
+    const {CaseTechnicalStudies} = useRecordContext()
+    const {CaseQuotationRequests} = props
+    let CaseTechnicalStudiesState = CaseTechnicalStudies?.length? CaseTechnicalStudies[0].state : ""
+    let CaseTechnicalStudyIsFeasable = CaseTechnicalStudies?.length? CaseTechnicalStudies[0].isFeasable : false
+    let CaseQuotationRequestsState = CaseQuotationRequests?.length? CaseQuotationRequests[0].state : ""
+    let caseQuotationLength = CaseQuotationRequests?.length
     const [isEditable, setIsEditable] = React.useState(false)
+    const validateArrayForm = (arrayValues) => {
+        let errors = []
+        for(let valueObj of arrayValues) {
+            if(!valueObj.id_responsible) {
+                errors.push("a responsible is required")
+            }
+
+            if(!valueObj.quotation_doc) {
+                errors.push("a document is required. Did you selected it AND uploaded it?")
+            }
+
+            if(!valueObj.state) {
+                errors.push("a valid state is required")
+            }
+        }
+        
+        return errors.join(", ")
+    }
+
     return (
         <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
                 source="CaseQuotationRequests"
                 fullWidth
-                validate={[value => setCaseQuotationRequestsLength(value.length)]}
+                defaultValue={[{}]}
                 style={{ display: isEditable ? "block" : "none" }}
+                
+                validate={[validateArrayForm]}
             >
                 <SimpleFormIterator
                     disableAdd={caseQuotationLength === 1 ? true : false}
-                    disableRemove
                     disableReordering
                     fullWidth
                 >
@@ -165,71 +184,92 @@ const CaseQuotationRequests = (props) => {
                         perPage={1000}
                         validate={[required()]}
                     >
-                        <SelectInput fullWidth optionText="cc" disabled={CaseQuotationRequestsState == "pending" ? false : true} />
+                        <SelectInput fullWidth optionText={option => `${getRoleNameFromId(option.role)}: ${option.name} - ${option.cc}`} />
                     </ReferenceInput>
-                    {/* <FileInput source="quotation_doc" accept=".pdf" /> */}
                     <ServerSideFileInput 
                         source="quotation_doc" 
                         accept=".pdf" 
                         uploadUri="static/upload" 
                         fullWidth
                     />
-                    <SelectInput
+                    <RadioButtonGroupInput
                         source="state"
                         defaultValue="pending"
-                        choices={[
-                            { id: "pending", name: "Pending" },
-                            { id: "ongoing", name: "Ongoing" },
-                            { id: "done", name: "Done" },
-                        ]}
+                        choices={quotation_states}
                         validate={[required()]}
                         fullWidth
                     />
                 </SimpleFormIterator>
             </ArrayInput>
             {!isEditable &&
-                <ArrayField source="CaseQuotationRequests">
-                    <Datagrid bulkActionButtons={false}>
-                        <ReferenceField source="id_responsible" reference="users">
-                            <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
+                <ArrayField source="CaseQuotationRequests" disableReordering>
+                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} empty={<EmptyMessageDatagrid phaseName="La solicitud de cotización no se ha realizado." />}>
+                        <ReferenceField source="id_responsible" reference="users" link={false}>
+                            <FunctionField render={record => record && `${getRoleNameFromId(record.role)}: ${record.name} - ${record.cc}`} />
                         </ReferenceField>
-                        <FunctionField source="quotation_doc" render={record => <a href={`${BACKEND_URL}/${record.quotation_doc}`}>{record.quotation_doc}</a>} />
+                        <FunctionField source="quotation_doc" render={record => <Box>{record.quotation_doc}</Box>} />
                         <SelectField
                             source="state"
-                            choices={[
-                                { id: "pending", name: "Pending" },
-                                { id: "ongoing", name: "Ongoing" },
-                                { id: "done", name: "Done" },
-                            ]}
+                            choices={quotation_states}
                             fullWidth
                         />
                     </Datagrid>
                 </ArrayField>
             }
-            <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
-                {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
-            </Button>
+            {CaseTechnicalStudiesState == "done" && CaseTechnicalStudyIsFeasable == true && CaseQuotationRequestsState != "done"  &&
+                <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
+                    {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
+                </Button>
+            }
         </div>
 
     )
 }
 
 const CaseSales = (props) => {
-    const { salesState, salesLength, setSalesLength } = props
+    const {CaseQuotationRequests} = useRecordContext()
+    const {CaseSales} = props
+    let CaseQuotationRequestsState = CaseQuotationRequests?.length? CaseQuotationRequests[0].state : ""
+    let salesState = CaseSales?.length? CaseSales[0].state : ""
+    let salesLength = CaseSales?.length
+
     const [isEditable, setIsEditable] = React.useState(false)
+
+    const validateArrayForm = (arrayValues) => {
+        let errors = []
+        for(let valueObj of arrayValues) {
+            if(!valueObj.id_responsible) {
+                errors.push("a responsible is required")
+            }
+
+            if(!valueObj.id_bill) {
+                errors.push("a Valid Bill ID is required")
+            }
+
+            if(!valueObj.sales_doc) {
+                errors.push("a document is required. Did you selected it AND uploaded it?")
+            }
+
+            if(!valueObj.state) {
+                errors.push("a valid state is required")
+            }
+        }
+        
+        return errors.join(", ")
+    }
+
     return (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
                 style={{ display: isEditable ? "block" : "none" }}
                 source="CaseSales"
-                className={classNameGetter("ArrayInput", "formBox", 3)}
                 fullWidth
-                validate={[value => setSalesLength(value.length)]}
+                validate={[validateArrayForm]}
             >
                 <SimpleFormIterator
                     disableAdd={salesLength === 1 ? true : false}
-                    disableRemove
                     disableReordering
+                    fullWidth
                 >
                     <ReferenceInput
                         source="id_responsible"
@@ -237,65 +277,91 @@ const CaseSales = (props) => {
                         filter={{ role: "seller" }}
                         perPage={1000}
                         validate={[required()]}
+                        fullWidth
                     >
-                        <SelectInput optionText="cc" disabled={salesState == "pending" ? false : true} />
+                        <SelectInput fullWidth optionText={option => `${getRoleNameFromId(option.role)}: ${option.name} - ${option.cc}`} />
                     </ReferenceInput>
-                    <TextInput source="id_bill" disabled={salesState !== "done" ? false : true} />
-                    <SelectInput
+                    <TextInput fullWidth source="id_bill" />
+                    <ServerSideFileInput 
+                        source="sales_doc" 
+                        accept=".pdf" 
+                        uploadUri="static/upload" 
+                        fullWidth
+                    />
+                    <RadioButtonGroupInput
                         source="state"
                         defaultValue="pending"
-                        choices={[
-                            { id: "pending", name: "Pending" },
-                            { id: "ongoing", name: "Ongoing" },
-                            { id: "done", name: "Done" },
-                        ]}
+                        choices={states}
                         validate={[required()]}
+                        fullWidth
                     />
                 </SimpleFormIterator>
             </ArrayInput>
             {!isEditable &&
-                <ArrayField source="CaseSales">
-                    <Datagrid bulkActionButtons={false}>
-                        <ReferenceField source="id_responsible" reference="users">
-                            <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
+                <ArrayField source="CaseSales"  disableReordering>
+                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} empty={<EmptyMessageDatagrid phaseName="La venta no se ha realizado." />}>
+                        <ReferenceField source="id_responsible" reference="users" link={false}>
+                            <FunctionField render={record => record && `${getRoleNameFromId(record.role)}: ${record.name} - ${record.cc}`} />
                         </ReferenceField>
                         <TextField source="id_bill" />
+                        <FunctionField source="sales_doc" render={record => <Box>{record.sales_doc}</Box>} />
                         <SelectField
                             source="state"
-                            choices={[
-                                { id: "pending", name: "Pending" },
-                                { id: "ongoing", name: "Ongoing" },
-                                { id: "done", name: "Done" },
-                            ]}
+                            choices={states}
                             fullWidth
                         />
                     </Datagrid>
                 </ArrayField>
             }
-            <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
-                {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
-            </Button>
+            {CaseQuotationRequestsState == "done" && salesState != "done" &&
+                <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
+                    {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
+                </Button>
+            }
         </div>
 
     )
 }
 
 const CaseInstallations = (props) => {
-    const { installationLength, setInstallationLength, installationState } = props
+    const {CaseSales} = useRecordContext()
+    let {CaseInstallations} = props
+    let installationState = CaseInstallations?.length? CaseInstallations[0].state : ""
+    let salesState = CaseSales?.length? CaseSales[0].state : ""
+    let installationLength = CaseInstallations?.length
     const [isEditable, setIsEditable] = React.useState(false)
+    const validateArrayForm = (arrayValues) => {
+        let errors = []
+        for(let valueObj of arrayValues) {
+            if(!valueObj.id_responsible) {
+                errors.push("a responsible is required")
+            }
+
+            if(!valueObj.installation_report && valueObj.state == "done") {
+                errors.push("A valid installation report is required")
+            }
+
+            if(!valueObj.state) {
+                errors.push("a valid state is required")
+            }
+        }
+        
+        return errors.join(", ")
+    }
     return (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", width: "100%"}}>
             <ArrayInput
                 style={{ display: isEditable ? "block" : "none" }}
                 source="CaseInstallations"
                 className={classNameGetter("ArrayInput", "formBox", 3)}
                 fullWidth
-                validate={[value => setInstallationLength(value.length)]}
+                isRequired
+                validate={[validateArrayForm]}
             >
                 <SimpleFormIterator
                     disableAdd={installationLength === 1 ? true : false}
-                    disableRemove
                     disableReordering
+                    fullWidth
                 >
                     <ReferenceInput
                         source="id_responsible"
@@ -303,46 +369,42 @@ const CaseInstallations = (props) => {
                         filter={{ role: "technical" }}
                         perPage={1000}
                         validate={[required()]}
+                        fullWidth
                     >
-                        <SelectInput optionText="cc" disabled={installationState == "pending" ? false : true} />
+                        <SelectInput fullWidth optionText={option => `${getRoleNameFromId(option.role)}: ${option.name} - ${option.cc}`} />
                     </ReferenceInput>
-                    <TextInput source="installation_report" disabled={installationState !== "done" ? false : true} />
-                    <SelectInput
+                    <TextInput fullWidth source="installation_report" multiline />
+                    <RadioButtonGroupInput
                         source="state"
                         defaultValue="pending"
-                        choices={[
-                            { id: "pending", name: "Pending" },
-                            { id: "ongoing", name: "Ongoing" },
-                            { id: "done", name: "Done" },
-                        ]}
+                        choices={states}
                         validate={[required()]}
+                        fullWidth
                     />
-                    <BooleanInput source="has_been_installed" disabled={installationState !== "done" ? false : true} />
+                    <BooleanInput fullWidth source="has_been_installed" />
                 </SimpleFormIterator>
             </ArrayInput>
             {!isEditable &&
-                <ArrayField source="CaseInstallations">
-                    <Datagrid bulkActionButtons={false}>
-                        <ReferenceField source="id_responsible" reference="users">
-                            <FunctionField render={record => record && `${record.cc} - ${record.name}`} />
+                <ArrayField source="CaseInstallations" disableReordering>
+                    <Datagrid bulkActionButtons={false} sx={{width: "inherit"}} empty={<EmptyMessageDatagrid phaseName="La instalación no se ha realizado." />}>
+                        <ReferenceField source="id_responsible" reference="users" link={false}>
+                            <FunctionField render={record => record && `${getRoleNameFromId(record.role)}: ${record.name} - ${record.cc}`} />
                         </ReferenceField>
                         <TextField source="installation_report" />
                         <SelectField
                             source="state"
-                            choices={[
-                                { id: "pending", name: "Pending" },
-                                { id: "ongoing", name: "Ongoing" },
-                                { id: "done", name: "Done" },
-                            ]}
+                            choices={states}
                             fullWidth
                         />
                         <BooleanField source="has_been_installed" />
                     </Datagrid>
                 </ArrayField>
             }
-            <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
-                {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
-            </Button>
+            {salesState == "done" && installationState != "done" &&
+                <Button variant="text" onClick={() => setIsEditable(!isEditable)}>
+                    {isEditable ? <EditOff style={{ backgroundColor: "transparent" }} /> : <ModeEdit style={{ backgroundColor: "transparent" }} />}
+                </Button>
+            }
         </div>
 
     )

@@ -2,23 +2,7 @@ import * as React from "react"
 import { Datagrid, List, NumberField, SelectField, TextField, EmailField, SimpleList } from "react-admin"
 import { useMediaQuery } from '@mui/material';
 import { PostBulkActionButtons, ListActions } from "../../common/components"
-
-const roles = [
-    { id: "customer", name: "Cliente Final" },
-    { id: "reseller", name: "Mayorista" },
-    { id: "technical", name: "Técnico" },
-    { id: "seller", name: "Vendedor" },
-    { id: "administrator", name: "Administrador" },
-    { id: "owner", name: "Propietario" }
-]
-
-const cc_types = [
-    { id: "CC", name: "Cedula de Ciudadanía" },
-    { id: "CE", name: "Cedula de Extrangería" },
-    { id: "PP", name: "Pasaporte" },
-    { id: "PE", name: "Permiso Especial de Permanencia" },
-    { id: "OT", name: "Otro" }
-]
+import { cc_types, roles } from "../../common/configs";
 
 export const ListUsers = () => {
     const isSmall = useMediaQuery(theme => theme.breakpoints.down('md'))

@@ -1,23 +1,17 @@
 import * as React from "react"
 import {
-    SelectInput, Edit, NumberInput, SimpleForm, TextInput, ArrayInput, SimpleFormIterator
+    SelectInput, Edit, NumberInput, SimpleForm, TextInput, ArrayInput, SimpleFormIterator, FormDataConsumer
 } from "react-admin"
 import { styleGetter } from "../../common/commonStyles"
+import { cc_types, hiring_type, roles } from "../../common/configs"
 
 export const EditUsers = () => {
     return (
         <Edit redirect="/users">
             <SimpleForm>
-                <div style={styleGetter("formBox")}>
                     <SelectInput
                         source="cc_type"
-                        choices={[
-                            { id: "CC", name: "Cedula de Ciudadanía" },
-                            { id: "CE", name: "Cedula de Extrangería" },
-                            { id: "PP", name: "Pasaporte" },
-                            { id: "PE", name: "Permiso Especial de Permanencia" },
-                            { id: "OT", name: "Otro" }
-                        ]}
+                        choices={cc_types}
                         fullWidth
                         required
                         disabled
@@ -27,37 +21,30 @@ export const EditUsers = () => {
                     <TextInput source="email" type="email" fullWidth required />
                     <SelectInput
                         source="role"
-                        choices={[
-                            { id: "customer", name: "Cliente Final" },
-                            { id: "reseller", name: "Mayorista" },
-                            { id: "technical", name: "Técnico" },
-                            { id: "seller", name: "Vendedor" },
-                            { id: "administrator", name: "Administrador" },
-                            { id: "owner", name: "Propietario" }
-                        ]}
+                        choices={roles}
                         fullWidth
                         required
                     />
-                </div>
                  <ArrayInput source="UserDatas" fullWidth>
-                    <SimpleFormIterator disableAdd disableRemove disableReordering>
-                        <TextInput source="address" fullwidth required />
+                    <SimpleFormIterator disableReordering disableClear fullWidth>
+                        <TextInput source="dataKey" fullWidth required />
+                        <TextInput source="dataValue" fullWidth required multiline />
                     </SimpleFormIterator>
                 </ArrayInput>
-                <ArrayInput source="UserStaffs" fullWidth>
-                    <SimpleFormIterator disableAdd disableRemove disableReordering>
-                        <SelectInput
-                            source="role"
-                            choices={[
-                                { id: "worker_by_contract", name: "Worker by contract" },
-                                { id: "worker_internal", name: "Internal Worker" },
-                                { id: "worker_external", name: "External Worker" }
-                            ]}
-                            required
-                            fullWidth
-                        />
-                    </SimpleFormIterator>
-                </ArrayInput>
+                <FormDataConsumer fullWidth>
+                    {({formData}) => (
+                        <ArrayInput source="UserStaffs" fullWidth disabled={["customer", "reseller"].includes(formData.role) || formData.role == undefined}>
+                            <SimpleFormIterator disableAdd={["customer", "reseller"].includes(formData.role) || formData.role == undefined || formData.UserStaffs.length} disableReordering fullWidth>
+                                <SelectInput
+                                    source="role"
+                                    choices={hiring_type}
+                                    required
+                                    fullWidth
+                                />
+                            </SimpleFormIterator>
+                        </ArrayInput>
+                    )}
+                </FormDataConsumer>
             </SimpleForm>
         </Edit>
     )

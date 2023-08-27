@@ -12,7 +12,8 @@ const models = require('./models');
 
 const usersCrudVerbs = require("./crudVerbs/usersCrudVerbs")
 const userauthsCrudVerbs = require("./crudVerbs/userauthsCrudVerbs")
-const casesCrudVerbs = require("./crudVerbs/casesCrudVerbs")
+const casesCrudVerbs = require("./crudVerbs/casesCrudVerbs");
+const { error } = require('console');
 
 const app = express()
 
@@ -23,11 +24,6 @@ app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({limit: '50mb'}));
 app.use(express.static('static'));
 app.use(fileUpload());
-
-app.get('/static/:filename', function(req, res){
-  const file = `${__dirname}/static/${req.params.filename}`;
-  res.download(file); // Set disposition and send it.
-});
 
 /** pre routes middlewares */
 
@@ -56,7 +52,9 @@ app.use((req, res, next) => {
   } else { next() }
 })
 
-/***************** */
+/**
+ * Login and session handlers
+ */
 app.post("/login", async (req, res) => {
   let username = req.body.username
   let password = req.body.password
@@ -126,6 +124,14 @@ app.use(crud('/userauths', userauthsCrudVerbs))
 
 app.use(crud('/cases', casesCrudVerbs))
 
+/**
+ * Files Handlers
+ */
+app.get('/static/:filename', function(req, res){
+  const file = `${__dirname}/static/${req.params.filename}`;
+  res.download(file); // Set disposition and send it.
+});
+
 app.post("/static/upload", (req, res) => {
   let upfile = req.files.file
   console.log(upfile)
@@ -148,17 +154,41 @@ app.post("/static/upload", (req, res) => {
   })
 })
 
+app.delete('/static/:filename', function(req, res){
+  const file = `${__dirname}/static/${req.params.filename}`;
+  if(fs.existsSync(file)) {
+    fs.unlink(file, err => {
+      if(err) {
+        console.log(err)
+        res.status(500).send({msg: "could not delete file"})
+      }
+      res.status(200).send({msg: "deleted successfully"})
+    })
+  }
+  res.download(file); // Set disposition and send it.
+});
+
 
 
 app.get('/', async (req, res) => {
   res.send("Hello World!")
 })
 
+/**
+ * DEV!!!!!!!!!!!!!!!!!!!!!!!
+ * SYNC DB
+ */
+app.delete("/reset", async (req, res) => {
+  await initData()
+  res.send("resetted")
+})
+/******************************** */
+
 /** post routes middleware **/
 app.use((err, req, res, next) => {
   console.log('ERROR2022: ', err);
 
-  res.status(404).json({ error: true });
+  res.status(500).json({ error: true, message: err.message });
   next();
 });
 
@@ -203,6 +233,10 @@ async function initData() {
     UserId: 1
   })
 }
+
+// setInterval(() => {
+
+// }, 86400000)
 
 models.sequelize.sync()
   //.then(initData)

@@ -1,4 +1,4 @@
-import { BACKEND_URL } from "../common/configs";
+import { BACKEND_URL, roles } from "../common/configs";
 
 /**helpers**/
 
@@ -16,6 +16,12 @@ export function hasPermission(url, verb) {
     return false
   }
 }
+
+export const getRoleNameFromId = (roleId) => {
+  let foundRole = roles.find(role => role.id == roleId)
+  return foundRole?.name
+}
+
 
 /** Validators */
 

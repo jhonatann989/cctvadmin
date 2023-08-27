@@ -1,25 +1,19 @@
 import * as React from "react"
 import {
-    Create, NumberInput, SimpleForm, TextInput, SelectInput, ArrayInput, SimpleFormIterator
+    Create, NumberInput, SimpleForm, TextInput, SelectInput, ArrayInput, SimpleFormIterator, FormDataConsumer
 } from "react-admin"
 
 import { styleGetter } from "../../common/commonStyles"
+import { cc_types, hiring_type, roles } from "../../common/configs"
 
 
 export const CreateUsers = () => {
     return (
         <Create redirect="/users">
             <SimpleForm>
-                <div style={styleGetter("formBox")}>
                     <SelectInput
                         source="cc_type"
-                        choices={[
-                            { id: "CC", name: "Cedula de Ciudadanía" },
-                            { id: "CE", name: "Cedula de Extrangería" },
-                            { id: "PP", name: "Pasaporte" },
-                            { id: "PE", name: "Permiso Especial de Permanencia" },
-                            { id: "OT", name: "Otro" }
-                        ]}
+                        choices={cc_types}
                         required
                         fullWidth
                     />
@@ -28,37 +22,29 @@ export const CreateUsers = () => {
                     <TextInput source="email" type="email" required fullWidth />
                     <SelectInput
                         source="role"
-                        choices={[
-                            { id: "customer", name: "Cliente Final" },
-                            { id: "reseller", name: "Mayorista" },
-                            { id: "technical", name: "Técnico" },
-                            { id: "seller", name: "Vendedor" },
-                            { id: "administrator", name: "Administrador" },
-                            { id: "owner", name: "Propietario" },
-                        ]}
+                        choices={roles}
                         required
                         fullWidth
                     />
-                </div>
                 <ArrayInput source="UserDatas" defaultValue={[{}]} fullWidth >
-                    <SimpleFormIterator disableAdd disableRemove disableReordering >
-                        <TextInput source="address" fullwidth required />
+                    <SimpleFormIterator disableAdd disableRemove disableReordering fullWidth>
+                        <TextInput source="dataKey" fullWidth required />
+                        <TextInput source="dataValue" fullWidth required />
                     </SimpleFormIterator>
                 </ArrayInput>
-                <ArrayInput source="UserStaffs" defaultValue={[{}]} fullWidth>
-                    <SimpleFormIterator disableAdd disableRemove disableReordering >
-                        <SelectInput
-                            source="role"
-                            choices={[
-                                { id: "worker_by_contract", name: "Worker by contract" },
-                                { id: "worker_internal", name: "Internal Worker" },
-                                { id: "worker_external", name: "External Worker" },
-                            ]}
-                            required
-                            fullWidth
-                        />
-                    </SimpleFormIterator>
-                </ArrayInput>
+                <FormDataConsumer>
+                    {({formData}) => (
+                        <ArrayInput source="UserStaffs" defaultValue={[{}]}  fullWidth disabled={["customer", "reseller"].includes(formData.role) || formData.role == undefined}>
+                            <SimpleFormIterator disableAdd disableRemove disableReordering fullWidth>
+                                <SelectInput
+                                    source="role"
+                                    choices={hiring_type}
+                                    fullWidth
+                                />
+                            </SimpleFormIterator>
+                        </ArrayInput>
+                    )}
+                </FormDataConsumer>
             </SimpleForm>
         </Create>
     )

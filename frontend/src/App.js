@@ -1,7 +1,9 @@
 import  * as React from "react"
-import { Admin, Resource } from 'react-admin';
+import { Admin, CustomRoutes, Resource } from 'react-admin';
+import { Route } from "react-router-dom";
 import simpleRestProvider from 'ra-data-simple-rest';
-import { httpClient } from "./providers/httpClientProvider";
+import { i18nProvider } from "./providers/i18nProvider";
+import { httpClient, httpResetApplication } from "./providers/httpClientProvider";
 import { authProvider } from "./providers/authProvider";
 import { hasPermission } from "./common/functions";
 import { CreateUsers } from "./views/users/Create";
@@ -25,15 +27,9 @@ function App() {
     <Admin 
       dataProvider={dataProvider} 
       authProvider={authProvider}
+      i18nProvider={i18nProvider}
     >
       <Resource name="userauths" list={ListUserAuths} show={ShowUserAuth} create={CreateUserAuths} edit={EditUserAuths} />
-      <Resource 
-        name="users"
-        list={hasPermission("users", "list")? ListUsers : null}
-        show={hasPermission("users", "show")? ShowUsers : null}
-        create={hasPermission("users", "create")? CreateUsers : null}
-        edit={hasPermission("users", "edit")? EditUsers : null}
-      />
       <Resource 
         name="users"
         list={hasPermission("users", "list")? ListUsers : null}
@@ -48,6 +44,9 @@ function App() {
         create={hasPermission("cases", "create")? CreateCases : null}
         edit={hasPermission("cases", "edit")? EditCases : null}
       />
+      <CustomRoutes>
+        <Route path="/reset" element={<button onClick={() => httpResetApplication(window)}>RESET EVERYTHING!!!!!!</button>} />
+      </CustomRoutes>
     </Admin>
   );
 }

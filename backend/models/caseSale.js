@@ -21,7 +21,10 @@ module.exports = (sequelize) => {
         },
         state: {
             type: DataTypes.STRING,
-        }
+        },
+        sales_doc: {
+            type: DataTypes.STRING,
+        },
     },{sequelize})
 
     return CaseSale;

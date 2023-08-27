@@ -1,5 +1,7 @@
 import * as React from "react"
 import { NumberField, SelectField, Show, SimpleShowLayout, EmailField, TextField, ArrayField, SingleFieldList, Datagrid } from "react-admin"
+import { cc_types, hiring_type, roles } from "../../common/configs"
+import { EmptyMessageDatagrid } from "../../common/components"
 
 export const ShowUsers = () => {
     return (
@@ -9,43 +11,27 @@ export const ShowUsers = () => {
                 <NumberField source="cc" fullWidth />
                 <SelectField
                     source="cc_type"
-                    choices={[
-                        { id: "CC", name: "Cedula de Ciudadanía" },
-                        { id: "CE", name: "Cedula de Extrangería" },
-                        { id: "PP", name: "Pasaporte" },
-                        { id: "PE", name: "Permiso Especial de Permanencia" },
-                        { id: "OT", name: "Otro" }
-                    ]}
+                    choices={cc_types}
                     fullWidth
                 />
                 <TextField source="name" fullWidth />
                 <EmailField source="email" fullWidth />
                 <SelectField
                     source="role"
-                    choices={[
-                        { id: "customer", name: "Cliente Final" },
-                            { id: "reseller", name: "Mayorista" },
-                            { id: "technical", name: "Técnico" },
-                            { id: "seller", name: "Vendedor" },
-                            { id: "administrator", name: "Administrador" },
-                            { id: "owner", name: "Propietario" }
-                    ]}
+                    choices={roles}
                     fullWidth
                 />
-                <ArrayField source="UserDatas">
-                    <Datagrid bulkActionButtons={false}>
-                        <TextField source="address" fullWidth />
+                <ArrayField source="UserDatas" >
+                    <Datagrid bulkActionButtons={false} empty={<EmptyMessageDatagrid phaseName="No se han registrado datos del usuario" />}>
+                        <TextField source="dataKey" fullWidth />
+                        <TextField source="dataValue" fullWidth />
                     </Datagrid>
                 </ArrayField>
                 <ArrayField source="UserStaffs">
-                    <Datagrid bulkActionButtons={false}>
+                    <Datagrid bulkActionButtons={false} empty={<EmptyMessageDatagrid phaseName="Este perfil no tiene un rol en el staff" />}>
                         <SelectField
                             source="role"
-                            choices={[
-                                { id: "worker_by_contract", name: "Worker by contract" },
-                                { id: "worker_internal", name: "Internal Worker" },
-                                { id: "worker_external", name: "External Worker" },
-                            ]}
+                            choices={hiring_type}
                             fullWidth
                         />
                     </Datagrid>

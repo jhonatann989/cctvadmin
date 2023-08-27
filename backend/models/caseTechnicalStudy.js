@@ -20,7 +20,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
         },
         evaluation: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
         },
         isFeasable: {
             type: DataTypes.BOOLEAN,

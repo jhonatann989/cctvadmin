@@ -4,6 +4,8 @@ import {
 } from "react-admin"
 import { styleGetter, classNameGetter } from "../../common/commonStyles"
 import { visibleListMandatory, arrayShouldNotbeEmpty } from "../../common/functions"
+import { modulePermissions, modules } from "../../common/configs"
+import { resources } from "../../providers/i18nProvider"
 
 export const EditUserAuths = () => {
     return (
@@ -36,26 +38,19 @@ export const EditUserAuths = () => {
                     <SimpleFormIterator disableReordering fullWidth>
                         <SelectInput
                             source="module"
-                            choices={[
-                                { id: "users", name: "Users" },
-                                { id: "cases", name: "Cases" },
-                            ]}
+                            label={resources.userauths.fields.module}
+                            choices={modules}
                             validate={[required()]}
                             fullWidth
                         />
                         <RadioButtonGroupInput
                             source="view"
-                            choices={[
-                                { id: "list", name: "List" },
-                                { id: "show", name: "Show" },
-                                { id: "edit", name: "Edit" },
-                                { id: "create", name: "Create" },
-                                { id: "delete", name: "Delete" },
-                            ]}
+                            label={resources.userauths.fields.view}
+                            choices={modulePermissions}
                             validate={[required()]}
                             fullWidth
                         />
-                        <BooleanInput source="can_view" defaultValue={true} fullWidth />
+                        <BooleanInput source="can_view" label={resources.userauths.fields.can_view} defaultValue={true} fullWidth />
                     </SimpleFormIterator>
                 </ArrayInput>
             </SimpleForm>

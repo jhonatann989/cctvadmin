@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Show, SimpleShowLayout, TextField, ArrayField, ReferenceField, Datagrid, BooleanField, FunctionField } from "react-admin"
+import { Show, SimpleShowLayout, TextField, ArrayField, ReferenceField, Datagrid, BooleanField, FunctionField, SelectField } from "react-admin"
+import { modulePermissions, modules } from "../../common/configs"
 
 export const ShowUserAuth = () => {
     return (
@@ -12,8 +13,8 @@ export const ShowUserAuth = () => {
                 
                 <ArrayField source="UserPermissions">
                     <Datagrid bulkActionButtons={false}>
-                        <TextField source="module" fullWidth />
-                        <TextField source="view" fullWidth />
+                        <SelectField source="module" choices={modules} fullWidth />
+                        <SelectField source="view" choices={modulePermissions} fullWidth />
                         <BooleanField source="can_view" />
                     </Datagrid>
                 </ArrayField>

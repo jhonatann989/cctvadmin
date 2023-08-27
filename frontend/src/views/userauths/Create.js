@@ -1,10 +1,12 @@
 import * as React from "react"
 import {
-    Create, SimpleForm, TextInput, AutocompleteInput, required, ReferenceInput, ArrayInput, SimpleFormIterator, SelectInput, BooleanInput, 
+    Create, SimpleForm, TextInput, AutocompleteInput, required, ReferenceInput, ArrayInput, SimpleFormIterator, SelectInput, BooleanInput, RadioButtonGroupInput, 
 } from "react-admin"
 import { visibleListMandatory, arrayShouldNotbeEmpty, isSingleValueAsync } from "../../common/functions"
 
 import { styleGetter, classNameGetter } from "../../common/commonStyles"
+import { modulePermissions, modules } from "../../common/configs"
+import { resources } from "../../providers/i18nProvider"
 
 
 export const CreateUserAuths = () => {
@@ -54,27 +56,22 @@ export const CreateUserAuths = () => {
                         value => visibleListMandatory(value), 
                     ]}
                 >
-                    <SimpleFormIterator disableReordering >
+                    <SimpleFormIterator disableReordering  fullWidth>
                         <SelectInput
                             source="module"
-                            choices={[
-                                { id: "users", name: "Users" },
-                                { id: "cases", name: "Cases" },
-                            ]}
+                            label={resources.userauths.fields.module}
+                            choices={modules}
                             validate={[required()]}
+                            fullWidth
                         />
-                        <SelectInput
+                        <RadioButtonGroupInput
                             source="view"
-                            choices={[
-                                { id: "list", name: "List" },
-                                { id: "show", name: "Show" },
-                                { id: "edit", name: "Edit" },
-                                { id: "create", name: "Create" },
-                                { id: "delete", name: "Delete" },
-                            ]}
+                            label={resources.userauths.fields.view}
+                            choices={modulePermissions}
                             validate={[required()]}
+                            fullWidth
                         />
-                        <BooleanInput source="can_view" defaultValue={true} />
+                        <BooleanInput source="can_view" label={resources.userauths.fields.can_view} defaultValue={true} fullWidth />
                     </SimpleFormIterator>
                 </ArrayInput>
             </SimpleForm>

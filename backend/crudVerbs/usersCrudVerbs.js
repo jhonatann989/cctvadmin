@@ -5,7 +5,8 @@ const {
   UserStaff,
   UserDatas,
   Users
-} = require("../models")
+} = require("../models");
+const userDatas = require('../models/userDatas');
 
 const usersCrudVerbs = {
     getList: async ({ filter, limit, offset, order }, {req}) => {
@@ -29,10 +30,12 @@ const usersCrudVerbs = {
       if(await getPermission("users", "create", req.header("Authorization"))) {
         let UsersModel = await Users.create(body)
         if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
-          UsersModel.addUserDatas(await UserDatas.create(body.UserDatas[0]))
+          for (let userdata in body.UserDatas) {
+            await UsersModel.addUserDatas(await UserDatas.create(userdata))
+          }
         }
         if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
-          UsersModel.addUserStaff(await UserStaff.create(body.UserStaffs[0]))
+          await UsersModel.addUserStaff(await UserStaff.create(body.UserStaffs[0]))
         }
         return UsersModel
       }
@@ -42,14 +45,15 @@ const usersCrudVerbs = {
     },
     update: async (id, body, { req, res }) => {
       if(await getPermission("users", "edit", req.header("Authorization"))) {
-        Users.update(body, { where: { id } })
-        if (Array.isArray(body.UserDatas) && body.UserDatas.length) {
-          UserDatas.update(body.UserDatas[0], { where: { UserId: id } })
+        let UsersModel = await Users.findByPk(id)
+        await Users.update(body, { where: { id } })
+        await UserDatas.destroy({ where: { UserId: id } })
+        for (let userdata of body.UserDatas) {
+          console.log(userdata)
+          await UsersModel.addUserDatas(await UserDatas.create(userdata))
         }
-        if (Array.isArray(body.UserStaffs) && body.UserStaffs.length) {
-          UserStaff.update(body.UserStaffs[0], { where: { UserId: id } })
-        }
-        return Users.findByPk(id)
+
+        return UsersModel
       } else {
         return undefined
       }

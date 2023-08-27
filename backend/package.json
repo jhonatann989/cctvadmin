@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js"
+    "start": "npx nodemon node app.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,7 @@
     "express-fileupload": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "mariadb": "^3.0.0",
+    "nodemon": "^3.0.1",
     "sequelize": "^6.19.0",
     "uuid": "^8.3.2"
   }

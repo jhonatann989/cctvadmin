@@ -16,8 +16,11 @@ module.exports = (sequelize) => {
         UserId: {
             type: DataTypes.INTEGER,
         },
-        address: {
+        dataKey: {
             type: DataTypes.STRING,
+        },
+        dataValue: {
+            type: DataTypes.TEXT,
         },
     },{
         sequelize,

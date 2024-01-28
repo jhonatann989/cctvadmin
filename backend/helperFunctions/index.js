@@ -8,7 +8,7 @@ fs.readdirSync(`${__dirname}`).forEach(file => {
             crud[filename[0]] = require(`${__dirname}/${file}`)
         }
     } catch (error) {
-        console.error(error)
+        console.log(error)
     }
 })
 

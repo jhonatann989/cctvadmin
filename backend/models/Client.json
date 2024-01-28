@@ -1,0 +1,1 @@
+{"fieldsDefinition":{"id":{"type":"INTEGER","autoIncrement":true,"primaryKey":true},"idNumber":{"type":"INTEGER"},"idType":{"type":"STRING"},"fullName":{"type":"STRING"},"address":{"type":"STRING"}},"associations":[{"relationType":"hasMany","relationModel":"SocialMediaInfo"}]}

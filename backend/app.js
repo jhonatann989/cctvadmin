@@ -1,128 +1,41 @@
-require('dotenv').config();
-const express = require('express')
-const fileUpload = require("express-fileupload");
-const { v4: uuidv4 } = require('uuid');
-const cors = require('cors')
-const { crud } = require("express-crud-router")
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
+import './configs/initEnv.js'
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import express from 'express'
+import fileUpload from 'express-fileupload';
+import { v4 } from 'uuid'
+import cors from 'cors'
+import fs from 'fs'
+import modelEntity from './models/index.js';
+import { crud } from 'express-crud-router'
+import sequelizeCrud from 'express-crud-router-sequelize-v6-connector'
+
 const port = process.env.PORT || 4000;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const models = require('./models');
-
-const usersCrudVerbs = require("./crudVerbs/usersCrudVerbs")
-const userauthsCrudVerbs = require("./crudVerbs/userauthsCrudVerbs")
-const casesCrudVerbs = require("./crudVerbs/casesCrudVerbs");
-const { error } = require('console');
+const { models } = modelEntity
 
 const app = express()
 
 app.use(cors({ origin: 'http://localhost:3000', }))
 
-//files
 app.use(express.json({limit: '50mb'}))
 app.use(express.urlencoded({limit: '50mb'}));
 app.use(express.static('static'));
 app.use(fileUpload());
 
-/** pre routes middlewares */
+/** post routes middleware **/
+app.use((err, req, res, next) => {
+  console.error('ERROR2022: ', err);
 
-// verify authorization
-app.use((req, res, next) => {
-  let wildUrls = ["/login", "/logout"]
-  if (!wildUrls.includes(req.url)) {
-    try {
-      let token = req.header("Authorization").replace("Bearer ", "")
-      jwt.verify(token, process.env.SECRET, async (error, decoded) => {
-        if (error) { res.status(401).send({ error: error.message }) }
-        else {
-          let authenticatedUser = await models.UserAuth.findOne({ where: { username: decoded.data, token: token }, include: [models.UserPermissions] })
-          if (authenticatedUser === null) {
-            await models.UserAuth.update({ token: "" }, { where: { username: decoded.data } })
-            res.status(401).send({ error: "Token does not corresponds to the authenticated user." })
-          } else {
-            next()
-          }
-        }
-      })
-    }
-    catch (error) {
-      res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
-    }
-  } else { next() }
-})
+  res.status(500).json({ error: true, message: err.message });
+  next();
+});
 
-/**
- * Login and session handlers
- */
-app.post("/login", async (req, res) => {
-  let username = req.body.username
-  let password = req.body.password
-  let authenticatedUser = await models.UserAuth.findOne({ where: { username: username }, include: [models.UserPermissions]})
-  if (authenticatedUser !== null && !await authenticatedUser.isValidPassword(password, authenticatedUser.dataValues.password)) {
-    res.status(401).send({})
-  } else {
-    let token = jwt.sign({ data: username }, process.env.SECRET, { expiresIn: "12h" })
-    let UsersModel = await models.Users.findByPk(authenticatedUser.get("UserId"))
-    await models.UserAuth.update({ token: token }, { where: { username: username} })
-    authenticatedUser.set("token", token)
-    delete authenticatedUser.dataValues.password
-    res.status(200).send({...authenticatedUser.dataValues, ...{role: UsersModel.get("role")}})
-  }
-})
-
-app.get("/logout", async (req, res) => {
-  try {
-    let token = req.header("Authorization").replace("Bearer ", "")
-    jwt.verify(token, process.env.SECRET, async (error, decoded) => {
-      if (error) res.status(200).send({ message: "it appears that token is an empty string or an invalid value.", error: error.message })
-      else {
-        let authenticatedUser = await models.UserAuth.findOne({ where: { username: decoded.data, token: token }, include: [models.UserPermissions] })
-        if (authenticatedUser === null) {
-          res.status(200).send({ message: "Already logged out." })
-        } else {
-          await models.UserAuth.update({ token: "" }, { where: { username: decoded.data } })
-          res.status(200).send({ message: "Logged out successfully." })
-        }
-      }
-    })
-  }
-  catch (error) {
-    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
-  }
-})
-
-app.get("/identity", async (req, res) => {
-  try {
-    let token = req.header("Authorization").replace("Bearer ", "")
-    jwt.verify(token, process.env.SECRET, async (error, decoded) => {
-      if (error) { res.status(401).send({ error: error.message }) }
-      else {
-        let authenticatedUser = await models.UserAuth.findOne({
-          where: { username: decoded.data },
-          attributes: { exclude: ["password", "token", "createdAt", "updatedAt", "id"] }
-        })
-        if (authenticatedUser === null) {
-          res.status(401).send({ error: "Unknown User." })
-        } else {
-          res.status(200).send({
-            id: authenticatedUser.get("UserId"),
-            fullName: authenticatedUser.get("username"),
-          })
-        }
-      }
-    })
-  }
-  catch (error) {
-    res.status(400).send({ error: "It appears that Bearer Token is not present in headers." })
-  }
-})
-
-app.use(crud('/users', usersCrudVerbs))
-
-app.use(crud('/userauths', userauthsCrudVerbs))
-
-app.use(crud('/cases', casesCrudVerbs))
+/**CRUD Handler */
+for(const modelName of Object.keys(models)) {
+  app.use(crud(`/${modelName}`, sequelizeCrud.default(models[modelName])))
+}
 
 /**
  * Files Handlers
@@ -139,7 +52,7 @@ app.post("/static/upload", (req, res) => {
   let updest = `static/${upfile.name}`;
 
   if(upfile.name.includes("create-uuid")) {
-    updest = `static/${uuidv4()}.${extension}`;
+    updest = `static/${v4.uuidv4()}.${extension}`;
   }
   upfile.mv(`${__dirname}/${updest}`, err => {
     if(err) {
@@ -159,7 +72,7 @@ app.delete('/static/:filename', function(req, res){
   if(fs.existsSync(file)) {
     fs.unlink(file, err => {
       if(err) {
-        console.log(err)
+        console.error(err)
         res.status(500).send({msg: "could not delete file"})
       }
       res.status(200).send({msg: "deleted successfully"})
@@ -168,80 +81,80 @@ app.delete('/static/:filename', function(req, res){
   res.download(file); // Set disposition and send it.
 });
 
-
-
 app.get('/', async (req, res) => {
   res.send("Hello World!")
 })
 
-/**
- * DEV!!!!!!!!!!!!!!!!!!!!!!!
- * SYNC DB
- */
-app.delete("/reset", async (req, res) => {
-  await initData()
-  res.send("resetted")
-})
-/******************************** */
-
-/** post routes middleware **/
-app.use((err, req, res, next) => {
-  console.log('ERROR2022: ', err);
-
-  res.status(500).json({ error: true, message: err.message });
-  next();
-});
-
-
-async function initData() {
-  console.log("=== sync database ====".toLocaleUpperCase())
-
-  await models.sequelize.sync({ force:true })
-
-  let initData = [
-    {
-      cc: 1232400204,
-      name: "Jhonatan Morales",
-      cc_type: "CC",
-      email: "jhonatann989@gmail.com",
-      role: "customer"
-    },
-    {
-      cc: 1094352748,
-      name: "Josué Morales",
-      cc_type: "CC",
-      email: "moralescjosued@gmail.com",
-      role: "technical"
-    },
-    {
-      cc: 13386011,
-      name: "Rodolfo Morales",
-      cc_type: "CC",
-      email: "pastorodolfo1@gmail.com",
-      role: "seller"
-    },
-  ]
-
-  for (let singledata of initData) {
-    await models.Users.create(singledata)
+app.get('/builder/:newModelName', async (req, res) => {
+  let modelName = req.params.newModelName
+  try {
+    let model = JSON.parse(fs.readFileSync(`${__dirname}/models/${modelName}.json`))
+    res.send(model)
+  } catch (error) {
+    console.error(error)
+    if(error.code == 'ENOENT') {
+      res.status(404).send({error: `No model found with name ${modelName}`})
+    } else {
+      res.status(500).send({error: error.message})
+    }
   }
+})
 
+app.post('/builder/:newModelName', async (req, res) => {
+  try {
+    let body = req.body
+    let modelName = req.params.newModelName
 
-  await models.UserAuth.create({
-    username: "admin",
-    password: "dvr12345",
-    UserId: 1
-  })
-}
+    if(!body.hasOwnProperty("fieldsDefinition")) {
+      res.status(400).send({status: "Error", message: `Fields Definitions are required in body`})
+      return
+    }
 
-// setInterval(() => {
+    if(!body.hasOwnProperty("associations")) {
+      res.status(400).send({status: "Error", message: `Field associations are required in body`})
+      return
+    }
 
-// }, 86400000)
+    if(!Array.isArray(body.associations)) {
+      res.status(400).send({status: "Error", message: `Field associations in body should be an array of objects or an empty array if there's no associations for the model`})
+      return
+    }
 
-models.sequelize.sync()
-  //.then(initData)
-  .then( async () => {
-    app.listen(port, () => {
-      console.log(`App listening on port ${port}`)
+    if(fs.existsSync( `${__dirname}/models/${modelName}.json` )) {
+      res.status(400).send({status: "Error", message: `Model ${modelName} already exists`})
+      return
+    } 
+    
+    fs.writeFileSync(`${__dirname}/models/${modelName}.json`, JSON.stringify(body));
+    res.status(201).send({status: "Success", message: `Model ${modelName} created successfully`})
+
+  } catch(err) {
+    console.error(err)
+    res.status(500).send({status: "Error", message: err.message})
+  }
+})
+
+app.delete('/builder/:newModelName', async (req, res) => {
+  try {
+    let modelName = req.params.newModelName
+    let modelEntity = await import("./models/index.js")
+    let {sequelize} = modelEntity.default
+
+    let queryInterface = sequelize.getQueryInterface()
+    queryInterface.dropTable(modelName)
+    .then(() => {
+      if(fs.existsSync(`${__dirname}/models/${modelName}.json`)) {
+        fs.unlinkSync(`${__dirname}/models/${modelName}.json`)
+      }
     })
-  })
+    res.send({status: "Success", message: `Model ${modelName} deleted successfully`})
+
+  } catch(err) {
+    console.error(err)
+    res.status(500).send({status: "Error", message: err.message})
+  }
+})
+
+app.listen(port, () => {
+  console.log(`App listening on port ${port}`)
+})

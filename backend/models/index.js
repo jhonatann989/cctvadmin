@@ -1,29 +1,62 @@
-const fs = require('fs');
-const path = require('path');
-const {Sequelize} = require('sequelize');
-const basename = path.basename(__filename);
-const config = require(__dirname + "./../configs/sequelizeServer")
-const db = {};
+import fs from 'fs'
+import { Sequelize, DataTypes } from 'sequelize'
+import server from './../configs/server.js'
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-let sequelize = new Sequelize(config.database, config.username, config.password, config.params);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const sequelize = new Sequelize(
+    server.database,
+    server.username,
+    server.password,
+    server
+);
 
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-  })
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize);
-    db[model.name] = model;
-  });
+let rawModelObj = []
+let models = {}
 
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+//Reading file Models
+for(let file of fs.readdirSync(`${__dirname}`)) {
+    let filename = file.split(".")
+    try {
+        if (filename[1] == "json") {
+            rawModelObj.push({
+                modelName: filename[0],
+                modelData: JSON.parse(fs.readFileSync(`${__dirname}/${file}`))
+            })
+        }
+    } catch (error) {
+        console.error(error)
+    }
+}
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+//Initializing models 
+for(let rawModel of rawModelObj) {
+    try {
+            let {modelName, modelData} = rawModel
+            let fieldsDefinitionKeys = Object.keys(modelData.fieldsDefinition)
+            for(let fieldKey of fieldsDefinitionKeys) {
+                let genericFieldType = modelData.fieldsDefinition[fieldKey].type
+                modelData.fieldsDefinition[fieldKey].type = DataTypes[genericFieldType]
+            }
+            models[modelName] = sequelize.define(modelName, modelData.fieldsDefinition, {tableName: modelName})
+    } catch (error) {
+        console.error(error)
+    }
+}
 
-module.exports = db;
+//Define Associations
+for(const rawModel of rawModelObj) {
+    try {
+            let {modelName, modelData} = rawModel
+            for(const association of modelData.associations ) {
+                models[modelName][association.relationType](models[association.relationModel])
+            }
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+(async () => { await sequelize.sync(); })();
+
+export default { sequelize, models }
